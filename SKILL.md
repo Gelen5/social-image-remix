@@ -9,6 +9,8 @@ description: 从抖音、小红书、快手图文链接通过浏览器提取图�
 
 ## 不可丢失的约束
 
+- **水印/署名/软广清理是完整保留的明确例外**：按 [references/content-cleanup.md](references/content-cleanup.md) 删除确认的水印、制作/发布机构名及Logo、宣传与导流内容。介绍对象的企业名、必要事实来源及免责声明仍保留。此规则优先于下文和案例中的“底部文案完整保留”；不能把主题信息误删为广告。
+
 - 默认二创方向：**参考原图的信息框架，重新设计视觉表达**。先分析标题、分块、字段及顺序，再重新设计配色、标题、卡片与插画，使成品与原图明显不同。不能仅换颜色或复刻原图；不要不看原图就机械套模板。已认可的两次案例与提示词见 [references/remix-examples.md](references/remix-examples.md)。
 
 - 默认**只改变视觉表达，不删减输入图片的信息**。保留标题、副标题、所有实体名称、完整描述、条件、数字、单位、时间、每个字段和底部文案。重复出现的适合人群等条件也逐项保留。用户明确要求精简时才改变此默认。
@@ -42,7 +44,7 @@ python scripts/browser_extract.py extract --url "分享链接或整段分享文�
 
 ### 3. 逐张识别并冻结完整文字
 
-查看manifest中全部本地图片。读取 [references/content.md](references/content.md)，写 `content.json` 和 `transcription-review.md`。
+查看全部原图，读取 [references/content.md](references/content.md) 与 [references/content-cleanup.md](references/content-cleanup.md)。先完整转录为 `source-content.json`，再精准清理，写 `content.json`、`removals.json` 和 `transcription-review.md`。保留下载原图不变；只有核对保留信息与删除清单后才标记已核对。无法确定的疑似广告暂停对应删除，请用户确认，不自行猜测。
 
 - 将每张图的标题、副标题、正文分块、字段及底部文案逐字录入，不合并重复字段。
 - `source_image` 与manifest文件一一对应，顺序不变。背景装饰可改变，承载信息的图表/照片必须转成完整数据/说明或保留为图中插图，不能漏掉。
@@ -54,6 +56,8 @@ python scripts/render_cards.py validate --content "任务目录/content.json" --
 ```
 
 ### 4. 整组统一排版
+
+传入清理后的完整文案与明确排除项。参考图中的已确认水印、Logo、机构署名、二维码、联系方式及软广不得复制进新视觉。成品逐张检查保留信息完整、删除项无残留或重新生成。脚本仅核对content与排版文字一致，不自动识别广告；交付同时附removals.json并简要说明实际删除内容。
 
 读取 [references/design.md](references/design.md) 和 [references/remix-examples.md](references/remix-examples.md)。先写任务内 `design-plan.md`：原图的信息框架、保留的信息、替换的视觉元素、全组设计规范及真实执行工具。
 
