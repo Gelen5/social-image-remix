@@ -79,6 +79,8 @@ python scripts/render_cards.py render --content "任务目录/content.json" --ma
 
 ### 5. 配套文章与交付
 
-用户只要图片就只交图片；要求文章或完整流程时，读取 [references/article.md](references/article.md)，用宿主实际模型基于冻结内容创作 `article.md`，保留来源关系，标清新增建议与原图信息。
+默认完成链接图片二创后，读取 [references/wechat-caption.md](references/wechat-caption.md)，自动生成一段适合微信贴图号、200字以内的配文，保存为 `caption.txt` 并直接展示可复制正文。用户明确只要图片或不需要配文时才省略。配文贴合本次实际输出的图片，不把未输出页的信息说成已展示；图片未通过核对时暂停配文最终交付。
 
-交付图片、文章（如请求）、content.json、核对记录、manifest及review.json。给可点击本地文件路径，报告真实通过的检查，以及仍受登录/平台变化影响的部分。不要把单条抖音成功描述成三平台全部稳定。
+用户另行要求文章时，读取 [references/article.md](references/article.md)，基于冻结内容创作 `article.md`。短配文与长文章分别交付，不默认生成长文章。
+
+交付图片、caption.txt、文章（如请求）、content.json、删除清单、核对记录、manifest及实际检查报告。给可点击文件路径，报告真实通过的检查与平台限制，不把单条成功描述成三平台全部稳定。
