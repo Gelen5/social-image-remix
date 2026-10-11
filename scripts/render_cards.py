@@ -6,6 +6,7 @@ import html
 import json
 from pathlib import Path
 import sys
+from workflow_common import content_digest, work_key
 
 TEMPLATES = {
     "editorial-blue": {"bg": "#f5f9ff", "ink": "#102c50", "accent": "#2375bd", "panel": "#ffffff", "radius": "18px", "border": "1px solid #aed0ef", "font": "sans-serif"},
@@ -87,19 +88,25 @@ def validate(content, manifest, source_root):
 
 
 def choose_style(content, output, history_path, requested=None):
-    digest = hashlib.sha256(json.dumps(content, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    digest = content_digest(content)
+    key = work_key(content["source_url"])
     local = output / "style.json"
     previous = read_json(local) if local.exists() else None
     history = read_json(history_path) if history_path.exists() else {"last_template": None, "jobs": []}
-    if requested:
+    bound = history.get("works", {}).get(key)
+    if bound:
+        if requested and requested != bound["template"]:
+            raise ValueError("同一作品已锁定风格；新模板需使用新的独立history明确开启设计版本")
+        template = bound["template"]
+    elif requested:
         template = requested
-    elif previous and previous.get("content_sha256") == digest:
+    elif previous and previous.get("work_key", key) == key and previous.get("content_sha256") == digest:
         template = previous["template"]
     else:
         names = list(TEMPLATES)
         last = history.get("last_template")
         template = names[(names.index(last) + 1) % len(names)] if last in names else names[0]
-    return {"template": template, "content_sha256": digest, "width": 1080, "height": 1440}, history
+    return {"template": template, "work_key": key, "content_sha256": digest, "width": 1080, "height": 1440}, history
 
 
 def verbatim(value, tag="span", cls=""):
@@ -155,6 +162,9 @@ def render(args):
     from PIL import Image
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
+    if any(output.glob("*.png")) or any(output.glob("*.html")):
+        (output / "review.json").write_text(json.dumps({"passed": False, "error": "已有图片/HTML，使用新的输出目录以隔离旧文件"}, ensure_ascii=False), encoding="utf-8")
+        raise ValueError("已有图片/HTML，使用新的输出目录以隔离旧文件")
     # Invalidate an earlier success report before checking a revised input.
     (output / "review.json").write_text(json.dumps({"passed": False, "status": "validating"}), encoding="utf-8")
     try:
@@ -170,7 +180,7 @@ def render(args):
     htmls = [card_html(card, style, source_root, args.font_file) for card in cards]
     # One font size for the entire series, chosen against its densest page.
     report = {"passed": False, "template": style["template"], "source_transcription_reviewed": True,
-              "content_sha256": style["content_sha256"], "cards": []}
+              "work_key": style["work_key"], "content_sha256": style["content_sha256"], "cards": []}
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -205,12 +215,14 @@ def render(args):
                     (output / f"{index:02d}.html").write_text(markup, encoding="utf-8")
                     source_index = next(i["index"] for i in manifest["images"] if i["file"] == card["source_image"])
                     report["cards"].append({"file": png.name, "source_image": card["source_image"], "source_index": source_index, "width": dimensions[0], "height": dimensions[1],
+                                            "sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
                                             "text_match": True, "overflow": False})
             finally:
                 browser.close()
         report["passed"] = True
         (output / "style.json").write_text(json.dumps(style, ensure_ascii=False, indent=2), encoding="utf-8")
         history["last_template"] = style["template"]
+        history.setdefault("works", {}).setdefault(style["work_key"], {})["template"] = style["template"]
         history["jobs"].append({"content_sha256": style["content_sha256"], "template": style["template"]})
         history["jobs"] = history["jobs"][-100:]
         history_path.parent.mkdir(parents=True, exist_ok=True)

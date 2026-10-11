@@ -19,7 +19,7 @@ opencli browser 独立会话名 eval "只读DOM查询"
 |---|---|---|
 | 抖音 | 当前作品中的图集图片URL带 `sc=image`，排除封面/头像和重复节点；按DOM顺序去重 | 当前样例成功，仍需核对顺序和懒加载 |
 | 小红书 | 查看当前笔记容器，选择其中轮播原图节点；传 `--selector` 与UI确认的 `--expected-count` | 未实测 |
-| 快手 | 查看当前图集容器，传实际图片CSS选择器和页面确认的总张数 | 未实测 |
+| 快手 | figure.swiper-card img.image-main，atlas图集含尚未加载的src；下载后验证尺寸；多图集要求限定selector | 正式脚本实测当前样例，仍需页面计数与作品核对 |
 
 选择器示意（不是已验证固定规则）：小红书可从 `#noteContainer` 下的swiper图片定位；快手先用宿主浏览器的DOM快照查看当前图集。没有正确选择器时不能用全页面img兜底。
 
@@ -27,7 +27,7 @@ opencli browser 独立会话名 eval "只读DOM查询"
 python scripts/browser_extract.py extract --url "链接" --selector "实际当前作品的img选择器" --expected-count 3 --output "任务目录/source"
 ```
 
-UI中1/3等轮播计数是完整性来源；DOM已有三张不证明作品仅有三张。逐张翻页，让懒加载图片真正出现，必要时暂停自动轮播；核对顺序再执行。当前脚本只收集当次DOM已加载的图片，不声称自动翻页。缺图时退出码2，manifest的complete为false。
+UI中1/3等计数是完整性来源；DOM三张不证明只有三张。快手已实测atlas节点可以读到懒加载src，脚本直接下载原图再校验真实尺寸，仍需总数核对。其他懒加载页逐张翻页收集；脚本不声称自动翻页。计数冲突、多个无法限定的图集或缺图需核对，缺图时complete=false。复用快手会话支持/fw/photo/作品路径，禁止短链接复用不同作品。
 
 保留图片文件、作品URL和哈希作为任务证据。媒体下载只使用页面提供的HTTPS图片URL，使用图片文件校验；不访问凭据、不运行未知下载器。下载失败记录原因，不创建假图片。
 

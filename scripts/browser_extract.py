@@ -12,6 +12,7 @@ import sys
 import time
 from urllib.parse import urlparse
 import uuid
+from workflow_common import work_key
 
 PLATFORMS = {
     "douyin": ("douyin.com", "iesdouyin.com"),
@@ -19,7 +20,7 @@ PLATFORMS = {
     "kuaishou": ("kuaishou.com", "chenzhongtech.com"),
 }
 CDNS = ("douyinpic.com", "byteimg.com", "douyincdn.com", "xhscdn.com",
-        "xiaohongshu.com", "kwimgs.com", "kwaicdn.com", "ksapisrv.com", "gifshow.com")
+        "xiaohongshu.com", "kwimgs.com", "yximgs.com", "kwaicdn.com", "ksapisrv.com", "gifshow.com")
 
 
 def host_matches(host, suffix):
@@ -92,17 +93,26 @@ def dom_query(platform, selector):
    try { return new URL(i.currentSrc || i.src).searchParams.get('sc') === 'image'; }
    catch { return false; }
  });
+ else if (opt.platform === 'kuaishou') {
+   nodes = Array.from(document.querySelectorAll('figure.swiper-card img.image-main'));
+   const groups = new Set(nodes.map(i => {
+     try { return new URL(i.currentSrc || i.src, location.href).pathname.replace(/_\\d+\\.[^/.]+$/, ''); }
+     catch { return ''; }
+   }));
+   if (groups.size > 1) throw new Error('多个快手图集，需用selector限定当前作品');
+ }
  else throw new Error('此平台需要当前作品图片的CSS选择器');
  const images = [], seen = new Set();
  for (const node of nodes) {
    if (!(node instanceof HTMLImageElement)) continue;
-   const url = node.currentSrc || node.src;
-   if (!url.startsWith('https://') || node.naturalWidth < 300 || node.naturalHeight < 300) continue;
+   const url = new URL(node.currentSrc || node.src, location.href).href;
+   const atlas = opt.platform === 'kuaishou' && /\\/ufile\\/atlas\\//.test(new URL(url).pathname);
+   if (!url.startsWith('https://') || (!atlas && (node.naturalWidth < 300 || node.naturalHeight < 300))) continue;
    const key = new URL(url).pathname;
    if (!seen.has(key)) { seen.add(key); images.push({url, width:node.naturalWidth, height:node.naturalHeight}); }
  }
  const counts = Array.from(document.querySelectorAll('span,div')).filter(e =>
-   e.children.length === 0 && e.getBoundingClientRect().width > 0)
+   e.getBoundingClientRect().width > 0)
    .map(e => e.textContent.trim()).filter(t => /^\\d+\\s*\\/\\s*\\d+$/.test(t));
  const totals = [...new Set(counts.map(t => Number(t.split('/')[1])))];
  return JSON.stringify({source_url:location.href, title:document.title,
@@ -131,6 +141,8 @@ def download_image(url, path):
         with Image.open(path) as image:
             image.load()
             width, height = image.size
+            if width < 300 or height < 300:
+                raise ValueError("源图尺寸太小，可能是头像或装饰")
             extension = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}.get(image.format)
             if not extension:
                 raise ValueError("仅支持JPEG、PNG、WebP静态源图")
@@ -158,8 +170,8 @@ def doctor():
 
 def extract(args):
     url, platform = extract_url(args.url)
-    if platform != "douyin" and not args.selector:
-        raise ValueError("小红书/快手v0.1需要--selector定位当前作品图片；参见references/browser.md")
+    if platform == "xiaohongshu" and not args.selector:
+        raise ValueError("小红书需要--selector定位当前作品图片；参见references/browser.md")
     root = Path(args.output).resolve()
     if (root / "manifest.json").exists():
         raise ValueError("输出目录已有manifest；用新任务目录，避免覆盖源图")
@@ -182,11 +194,14 @@ def extract(args):
             raise ValueError("浏览器最终平台与输入不一致")
         # Existing sessions must correspond to the requested work, not a different tab.
         if args.session:
-            supplied_id = re.search(r"/(?:note|video|explore|short-video)/([^/?]+)", url)
-            resolved_id = re.search(r"/(?:note|video|explore|short-video)/([^/?]+)", resolved)
-            if not supplied_id or not resolved_id or supplied_id[1] != resolved_id[1]:
+            supplied_id = re.search(r"/(?:note|video|explore|short-video|photo|discovery/item)/([^/?]+)", url)
+            resolved_id = re.search(r"/(?:note|video|explore|short-video|photo|discovery/item)/([^/?]+)", resolved)
+            if not supplied_id or not resolved_id or work_key(url) != work_key(resolved):
                 raise ValueError("复用会话时请传与当前作品一致的完整作品URL")
-        expected = args.expected_count or snapshot.get("expected_count")
+        detected = snapshot.get("expected_count")
+        if args.expected_count and detected and args.expected_count != detected:
+            raise ValueError("提供的总张数与页面计数冲突，需重新核对")
+        expected = args.expected_count or detected
         manifest = {"version": 1, "platform": platform, "input_url": url, "source_url": resolved,
                     "expected_count": expected, "complete": False, "images": [], "errors": []}
         for index, item in enumerate(snapshot.get("images", []), 1):

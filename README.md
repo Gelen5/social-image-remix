@@ -1,11 +1,11 @@
-# social-image-remix · 社交图文二创 Skill v0.1.4
+# social-image-remix · 社交图文二创 Skill v0.2.0
 
-将抖音/小红书/快手图文链接，通过客户浏览器提取图片，逐张读取完整信息，以**整组统一风格**输出3:4图片，并按需创作文章。面向Codex和WorkBuddy等能执行本地Skill的工具。
+将抖音/小红书/快手图文链接，通过客户浏览器提取图片，逐张读取完整信息，以**整组统一风格**输出3:4图片，并默认输出配文、文章和3个标题。面向Codex和WorkBuddy等能执行本地Skill的工具。
 
 ## 这一版能做什么
 
 - 浏览器链接提取、图片下载、数量/尺寸/哈希记录。
-- 抖音内置当前图集DOM规则；小红书和快手提供选择器模式及操作说明，尚未验证实际链接。
+- 抖音内置当前图集DOM规则；快手新增内置atlas图集规则；小红书提供选择器模式，尚未验证实际链接。
 - 图片理解由宿主看图能力完成，不捏造OCR输出；冻结完整文字后再排版。
 - 四套固定文字模板：同一任务整组共用，跨任务轮换；1080×1440 PNG，DOM文字一致性/溢出检查。
 - 配套文章创作规范、客户隔离的输出与模板历史、本地安装和ZIP打包。
@@ -14,7 +14,7 @@
 
 默认精准清理确认的水印、制作/发布机构署名、Logo、软广及导流；保留主题企业、必要来源和免责声明。先完整转录，再记录删除项并核对成品，详见 [内容清理规则](references/content-cleanup.md)。
 
-默认二创图片验收后，自动输出一段200字以内、贴合实际图片内容的微信贴图号配文，保存caption.txt；长文章按需生成。详见 [配文规则](references/wechat-caption.md)。
+默认二创图片验收后，自动输出一段200字以内、贴合实际图片内容的微信贴图号配文，保存caption.txt；默认另生成580–620字文章正文和3个标题，运行统一交付检查。详见 [配文规则](references/wechat-caption.md)。
 
 支持指定原图页码，如只二创第2、3张；也可先分析完整图集，推荐不影响连贯性的组合。配文和文章严格限定最终所选图片，不混入未选页事实。详见 [选图与连贯性规则](references/image-selection.md)。
 
@@ -38,7 +38,7 @@ OpenCLI扩展的安装和配对见 [OpenCLI官方仓库](https://github.com/jack
 
 **Codex：**把完整仓库目录放到用户Skill目录中的 `social-image-remix` 文件夹，或使用已有技能安装器从该GitHub仓库根目录安装。不要只复制SKILL.md。Windows常用位置为用户目录下 `.agents/skills/social-image-remix`；以客户端实际发现路径为准。重新打开客户端并确认技能出现。
 
-**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.1.4.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
+**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.2.0.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
 
 安装命令只在客户要求安装时执行；本仓库不改动任何客户的其他Skill。
 
@@ -68,9 +68,11 @@ python scripts/render_cards.py render --content runs/demo/content.json --manifes
 
 ```powershell
 python -m unittest discover -s tests -v
-python scripts/package_skill.py --output dist/social-image-remix-v0.1.4.zip
+python scripts/package_skill.py --output dist/social-image-remix-v0.2.0.zip
 ```
 
 这套测试检查完整性阻断、模板整组一致、历史轮换、文字保真及真实PNG渲染。真实平台验证记录见 [VALIDATION.md](VALIDATION.md)。跨机器Codex/WorkBuddy导入、登录过期、懒加载、大批量处理仍需现场验收。
+
+交付检查：`python scripts/check_delivery.py --content 任务目录/content.json --manifest 任务目录/source/manifest.json --image-report 本次图片目录/review.json --text-root 本次文字目录`。格式与验收见 [交付说明](references/delivery.md)。
 
 源码MIT许可证；平台图片和文字权利属于原作者。仓库不包含客户账号、API Key或原作者的图像素材。
