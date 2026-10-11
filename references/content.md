@@ -1,5 +1,7 @@
 # 完整信息与数据格式
 
+支持根字段selected_indices，例如[2,3]。页码从1开始、升序、去重且在完整manifest范围内；cards只含对应的02.webp与03.webp，保持源图顺序。不提供该字段则默认全部，不可静默少图。manifest仍保留整组真实数量与顺序。选图及衔接规则见 [image-selection.md](image-selection.md)。脚本校验范围和对应关系，不自动判断语义连贯。
+
 先看图完整转录为source-content.json，再按 [content-cleanup.md](content-cleanup.md) 精准删除确认的水印、机构署名和软广，将保留信息冻结为content.json，删除清单写入removals.json。脚本不假装执行OCR。示例是格式说明，不代表实测招聘信息：
 
 ```json

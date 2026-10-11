@@ -33,6 +33,32 @@ class WorkflowTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_selected_pages_exclude_unselected_and_reject_bad_scope(self):
+        original = copy.deepcopy(self.content["cards"][0])
+        for index in (2, 3):
+            name = f"{index:02d}.png"
+            (self.root / name).write_bytes((self.root / "01.png").read_bytes())
+            self.manifest["images"].append(dict(self.manifest["images"][0], index=index, file=name))
+        self.manifest["expected_count"] = 3
+        self.content["selected_indices"] = [2, 3]
+        self.content["cards"] = [dict(original, source_image=f"{i:02d}.png") for i in (2, 3)]
+        self.assertEqual(len(validate(self.content, self.manifest, self.root)), 2)
+        for bad in ([], [0], [4], [2, 2], [3, 2], [True], "2,3"):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                validate(dict(self.content, selected_indices=bad), self.manifest, self.root)
+        with self.assertRaises(ValueError):
+            validate(dict(self.content, cards=[original, self.content["cards"][1]]), self.manifest, self.root)
+        (self.root / "content.json").write_text(json.dumps(self.content), encoding="utf-8")
+        (self.root / "manifest.json").write_text(json.dumps(self.manifest), encoding="utf-8")
+        args = argparse.Namespace(content=self.root / "content.json", manifest=self.root / "manifest.json",
+                                  output=self.root / "selected", history=self.root / "history.json",
+                                  template=None, font_file=None)
+        self.assertEqual(render(args), 0)
+        report = json.loads((self.root / "selected/review.json").read_text())
+        self.assertEqual([c["source_index"] for c in report["cards"]], [2, 3])
+        self.assertEqual([c["source_image"] for c in report["cards"]], ["02.png", "03.png"])
+        self.assertEqual(len(list((self.root / "selected").glob("*.png"))), 2)
+
     def test_platform_routes_and_domain_boundary(self):
         self.assertEqual(extract_url("复制打开 https://v.douyin.com/abc/ 文案")[1], "douyin")
         self.assertEqual(extract_url("https://xhslink.cn/abc")[1], "xiaohongshu")

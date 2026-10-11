@@ -43,14 +43,26 @@ def validate(content, manifest, source_root):
         raise ValueError("manifest源图数量不完整")
     if len({image.get("file") for image in images}) != len(images):
         raise ValueError("源图文件名重复")
+    for index, image in enumerate(images, 1):
+        if image.get("index") != index:
+            raise ValueError("manifest原始页码不连续")
+        source = local_asset(source_root, image["file"])
+        if hashlib.sha256(source.read_bytes()).hexdigest() != image.get("sha256"):
+            raise ValueError("源图哈希变化")
     if content.get("transcription_reviewed") is not True:
         raise ValueError("必须先逐张看图核对完整文字，再设置transcription_reviewed=true")
     if content.get("source_url") != manifest.get("source_url"):
         raise ValueError("content来源URL与manifest不一致")
     cards = content.get("cards", [])
-    if len(cards) != len(images):
-        raise ValueError("默认一张源图对应一张二创图，不能少图或静默分页")
-    for index, (card, image) in enumerate(zip(cards, images), 1):
+    selected = content.get("selected_indices", list(range(1, len(images) + 1)))
+    if (not isinstance(selected, list) or not selected
+            or any(type(i) is not int or i < 1 or i > len(images) for i in selected)
+            or selected != sorted(set(selected))):
+        raise ValueError("selected_indices必须是原图范围内、升序且不重复的整数页码")
+    if len(cards) != len(selected):
+        raise ValueError("二创图必须与选定源图一一对应，不能缺图或混入未选图片")
+    for index, card in zip(selected, cards):
+        image = images[index - 1]
         if image.get("index") != index or card.get("source_image") != image.get("file"):
             raise ValueError("源图对应或顺序不一致")
         source = local_asset(source_root, image["file"])
@@ -191,7 +203,8 @@ def render(args):
                         raise ValueError("输出尺寸不符合3:4")
                     markup = markup.replace('var(--body-size,26px)', f'{size}px')
                     (output / f"{index:02d}.html").write_text(markup, encoding="utf-8")
-                    report["cards"].append({"file": png.name, "width": dimensions[0], "height": dimensions[1],
+                    source_index = next(i["index"] for i in manifest["images"] if i["file"] == card["source_image"])
+                    report["cards"].append({"file": png.name, "source_image": card["source_image"], "source_index": source_index, "width": dimensions[0], "height": dimensions[1],
                                             "text_match": True, "overflow": False})
             finally:
                 browser.close()

@@ -44,6 +44,10 @@ python scripts/browser_extract.py extract --url "分享链接或整段分享文�
 
 ### 3. 逐张识别并冻结完整文字
 
+先读取 [references/image-selection.md](references/image-selection.md)，分析整组图片的主题、上下文和跨页依赖。用户指定第2、3张时，按原图1起算页码只处理这两张，不自动加页。用户要求选图方案时先给可选组合、理由和缺失上下文，待用户选定再制作。只给链接且未指定范围时默认全部。查看其他页仅用于判断衔接，不授权将其内容带入所选图片、配文或文章。
+
+保存 `selection.json` 和 `selection-analysis.md`；选定后将原图升序页码写入content.json的 `selected_indices`，cards只包含选定页。原始manifest始终保留整组数量与顺序，不重编号或伪造为子集。图集不完整、页码不存在或关键依赖无法解决时明确说明，不能擅自替换、补页或补写。
+
 查看全部原图，读取 [references/content.md](references/content.md) 与 [references/content-cleanup.md](references/content-cleanup.md)。先完整转录为 `source-content.json`，再精准清理，写 `content.json`、`removals.json` 和 `transcription-review.md`。保留下载原图不变；只有核对保留信息与删除清单后才标记已核对。无法确定的疑似广告暂停对应删除，请用户确认，不自行猜测。
 
 - 将每张图的标题、副标题、正文分块、字段及底部文案逐字录入，不合并重复字段。
@@ -82,5 +86,7 @@ python scripts/render_cards.py render --content "任务目录/content.json" --ma
 默认完成链接图片二创后，读取 [references/wechat-caption.md](references/wechat-caption.md)，自动生成一段适合微信贴图号、200字以内的配文，保存为 `caption.txt` 并直接展示可复制正文。用户明确只要图片或不需要配文时才省略。配文贴合本次实际输出的图片，不把未输出页的信息说成已展示；图片未通过核对时暂停配文最终交付。
 
 用户另行要求文章时，读取 [references/article.md](references/article.md)，基于冻结内容创作 `article.md`。短配文与长文章分别交付，不默认生成长文章。
+
+配文与文章严格共用最终选图范围。每项具体事实必须能追溯到所选页；未选页仅供衔接诊断，不能作为正文材料。改变选图范围后重建content并重新生成配文/文章，防止旧内容混入。
 
 交付图片、caption.txt、文章（如请求）、content.json、删除清单、核对记录、manifest及实际检查报告。给可点击文件路径，报告真实通过的检查与平台限制，不把单条成功描述成三平台全部稳定。
