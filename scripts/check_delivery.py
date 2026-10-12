@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 from PIL import Image
@@ -44,8 +45,9 @@ def check(content_path, manifest_path, image_report_path, text_root):
     caption = (root/'caption.txt').read_text(encoding='utf-8-sig').strip()
     article = (root/'article.txt').read_text(encoding='utf-8-sig').strip()
     titles = read_json(root/'titles.json')
-    if not caption or '\n' in caption or '\r' in caption or count_text(caption) > 200:
-        raise ValueError('配文必须是一段、1–200字符')
+    paragraphs = [p.strip() for p in re.split(r'[\r\n]+', caption) if p.strip()]
+    if not 1 <= len(paragraphs) <= 5 or not 1 <= count_text(caption) <= 200:
+        raise ValueError('配文必须为1–5个非空段落，总计1–200字符')
     if not 580 <= count_text(article) <= 620:
         raise ValueError('文章正文必须为580–620字符')
     if (not isinstance(titles, list) or len(titles) != 3
@@ -66,7 +68,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if not images.get('template'):
         raise ValueError('图片报告缺少整组风格标识')
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
-            'caption_characters': count_text(caption), 'article_characters': count_text(article),
+            'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
             'title_count': 3, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
             'semantic_verification': 'host_review_attestation_not_automatic_detection'}

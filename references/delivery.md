@@ -1,6 +1,6 @@
 # 完整交付检查
 
-默认交付所选3:4图片、caption.txt（一段1–200字符）、article.txt（正文580–620字符）、titles.json（3个不同非空单行标题）。统一非空白Unicode字符计数，标点/数字/英文计入，空白不计入；标题、来源说明与字数说明单独交付不计入正文。
+默认交付所选3:4图片、caption.txt（1–5段，总计1–200字符）、article.txt（正文580–620字符）、titles.json（3个不同非空单行标题）。统一非空白Unicode字符计数，标点/数字/英文计入，空白不计入；标题、来源说明与字数说明单独交付不计入正文。
 
 仅在宿主实际完成语义/视觉复核后设置true，不为通过脚本伪造标记。脚本没有自动事实或广告识别能力。
 
@@ -24,6 +24,6 @@ content哈希由workflow_common.content_digest(content)计算，work_key由完�
 python scripts/check_delivery.py --content "任务目录/content.json" --manifest "任务目录/source/manifest.json" --image-report "本次图片目录/review.json" --text-root "本次文字目录"
 ```
 
-通过时delivery.json列出本次明确文件与字数；失败时passed=false，无可交付清单。仅交付清单文件，不打包整个任务目录。门禁阻断错页、旧PNG、图片哈希变化、过期文字核对、缺标题、超限字数与未完成复核。
+通过时delivery.json列出本次明确文件与字数；失败时passed=false，无可交付清单。仅交付清单文件，不打包整个任务目录。门禁阻断错页、旧PNG、图片哈希变化、过期文字核对、缺标题、超限字数/段数与未完成复核。
 
 用户明确只要图片等局部任务时尊重选择，写partial-delivery.json记录实际文件、省略项与对应检查，不宣称完整门禁通过。文章材料不足可交已完成图片并说明文章待补选，不能伪造完整成功。

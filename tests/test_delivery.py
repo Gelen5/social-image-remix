@@ -66,13 +66,20 @@ class DeliveryTests(unittest.TestCase):
         for n in (579,621):
             self.texts(n)
             with self.assertRaises(ValueError): self.run_check()
-        for caption in ('', '字'*201, '一段\n另一段'):
+        for caption in ('', '字'*201, '\n\n'.join(['一段']*6)):
             self.texts(600,caption)
             with self.assertRaises(ValueError): self.run_check()
         for titles in (['一','二'], ['一','二','三','四'], ['一','一','三'], ['一','','三']):
             self.texts(600,titles=titles)
             with self.assertRaises(ValueError): self.run_check()
         self.assertEqual(count_text(' 中 文\n2027， '),7)
+
+    def test_caption_semantic_paragraph_count(self):
+        for count in (1, 2, 5):
+            self.texts(600,caption='\n\n'.join(['本段仅为结构测试。']*count))
+            self.assertEqual(self.run_check()['caption_paragraphs'],count)
+        self.texts(600,caption='第一段。\r\n\r\n第二段。')
+        self.assertEqual(self.run_check()['caption_paragraphs'],2)
 
     def test_stale_texts_scope_and_extra_files_block(self):
         (self.root/'article.txt').write_text('新'*600,encoding='utf-8')
