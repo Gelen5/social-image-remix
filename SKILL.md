@@ -91,6 +91,8 @@ python scripts/render_cards.py render --content "任务目录/content.json" --ma
 
 ### 5. 配套文章与交付
 
+进入交付前必须执行 [references/image-quality.md](references/image-quality.md)：逐张打开最终输出图片，对照原图及清理后文案核查文字正确性，再检查排版。错别字、乱码、漏字、错数字、溢出、截断、重叠、遮挡或手机不可读均为阻断项，先修正/重生成，再检查修改后的实际文件。不能仅凭生图成功或脚本返回成功交付。逐图检查写入text-review.json的image_checks，绑定输出文件哈希；原图疑似笔误或陌生缩写不能猜测，明确标出待确认，不宣称没有错误。
+
 默认完成链接图片二创后，读取 [references/wechat-caption.md](references/wechat-caption.md)，按图片语义生成1–5段适合微信贴图号的配文，总计不超过200字，保存为 `caption.txt` 并直接展示可复制正文。用户明确只要图片或不需要配文时才省略。配文贴合本次实际输出的图片，不把未输出页的信息说成已展示；图片未通过核对时暂停配文最终交付。
 
 默认读取 [references/article.md](references/article.md)，只基于所选清理后内容生成580–620字正文，保存article.txt；另生成3个不同的可发布标题，保存titles.json。正文不含标题、来源链接和字数说明。材料不足以支撑文章时提示补选，不能凑字数编造事实或擅自扩大范围。

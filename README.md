@@ -1,4 +1,4 @@
-# social-image-remix · 社交图文二创 Skill v0.2.1
+# social-image-remix · 社交图文二创 Skill v0.2.2
 
 将抖音/小红书/快手图文链接，通过客户浏览器提取图片，逐张读取完整信息，以**整组统一风格**输出3:4图片，并默认输出配文、文章和3个标题。面向Codex和WorkBuddy等能执行本地Skill的工具。
 
@@ -17,6 +17,8 @@
 默认二创图片验收后，按图片语义输出不超过5段、总计200字以内的微信贴图号配文，保存caption.txt；默认另生成580–620字文章正文和3个标题，运行统一交付检查。详见 [配文规则](references/wechat-caption.md)。
 
 支持指定原图页码，如只二创第2、3张；也可先分析完整图集，推荐不影响连贯性的组合。配文和文章严格限定最终所选图片，不混入未选页事实。详见 [选图与连贯性规则](references/image-selection.md)。
+
+图片完成后必须逐张核对最终文字和排版，错字、溢出、截断、遮挡等先修正再交付；核对记录绑定最终文件哈希。详见 [图片质量检查](references/image-quality.md)。
 
 无需parse-video；不要求手工复制Cookie。不自动发布。
 
@@ -38,7 +40,7 @@ OpenCLI扩展的安装和配对见 [OpenCLI官方仓库](https://github.com/jack
 
 **Codex：**把完整仓库目录放到用户Skill目录中的 `social-image-remix` 文件夹，或使用已有技能安装器从该GitHub仓库根目录安装。不要只复制SKILL.md。Windows常用位置为用户目录下 `.agents/skills/social-image-remix`；以客户端实际发现路径为准。重新打开客户端并确认技能出现。
 
-**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.2.1.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
+**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.2.2.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
 
 安装命令只在客户要求安装时执行；本仓库不改动任何客户的其他Skill。
 
@@ -68,7 +70,7 @@ python scripts/render_cards.py render --content runs/demo/content.json --manifes
 
 ```powershell
 python -m unittest discover -s tests -v
-python scripts/package_skill.py --output dist/social-image-remix-v0.2.1.zip
+python scripts/package_skill.py --output dist/social-image-remix-v0.2.2.zip
 ```
 
 这套测试检查完整性阻断、模板整组一致、历史轮换、文字保真及真实PNG渲染。真实平台验证记录见 [VALIDATION.md](VALIDATION.md)。跨机器Codex/WorkBuddy导入、登录过期、懒加载、大批量处理仍需现场验收。

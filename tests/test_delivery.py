@@ -54,7 +54,9 @@ class DeliveryTests(unittest.TestCase):
         self.write(self.root/'titles.json',titles if titles is not None else ['标题一','标题二','标题三'])
         self.write(self.root/'text-review.json',dict(content_sha256=content_digest(self.content),selected_indices=[1],
             text_sha256=text_signature(self.root),facts_reviewed=True,scope_reviewed=True,titles_reviewed=True,
-            images_visually_reviewed=True,cleanup_reviewed=True,notes='合成测试数据，仅验证门禁，不是实际文字质量证明'))
+            images_visually_reviewed=True,cleanup_reviewed=True,notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
+            image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
+                               text_correct=True,layout_passed=True,issues=[],notes='合成测试图，仅检查门禁')]))
 
     def run_check(self):
         return check(self.root/'content.json',self.source/'manifest.json',self.out/'review.json',self.root)
@@ -73,6 +75,20 @@ class DeliveryTests(unittest.TestCase):
             self.texts(600,titles=titles)
             with self.assertRaises(ValueError): self.run_check()
         self.assertEqual(count_text(' 中 文\n2027， '),7)
+
+    def test_each_image_quality_review_required_and_version_bound(self):
+        p=self.root/'text-review.json'
+        original=json.loads(p.read_text(encoding='utf-8'))
+        for change in ({'text_correct':False}, {'layout_passed':False}, {'issues':['标题溢出']}, {'sha256':'old'}, {'notes':''}):
+            record=copy.deepcopy(original)
+            record['image_checks'][0].update(change)
+            self.write(p,record)
+            with self.assertRaises(ValueError): self.run_check()
+        for missing in (None, []):
+            self.write(p,dict(original,image_checks=missing))
+            with self.assertRaises(ValueError): self.run_check()
+        self.write(p,original)
+        self.assertTrue(self.run_check()['passed'])
 
     def test_caption_semantic_paragraph_count(self):
         for count in (1, 2, 5):

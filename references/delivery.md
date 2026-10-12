@@ -10,6 +10,8 @@
 
 ## text-review.json
 
+必须按 [image-quality.md](image-quality.md) 逐张核查最终图片的文字与排版，增加image_checks，记录实际文件、源页码、图片哈希、text_correct、layout_passed、issues和notes。漏检、有未解决问题或旧版本核对均阻断交付。
+
 记录content_sha256、selected_indices、text_sha256；facts_reviewed、scope_reviewed、titles_reviewed、images_visually_reviewed、cleanup_reviewed只有实际核对后才true；notes写实际逐句/逐图核对说明。
 
 在Skill目录计算：

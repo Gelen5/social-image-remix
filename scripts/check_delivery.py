@@ -63,6 +63,17 @@ def check(content_path, manifest_path, image_report_path, text_root):
     for key in ('facts_reviewed', 'scope_reviewed', 'titles_reviewed', 'images_visually_reviewed', 'cleanup_reviewed'):
         if review.get(key) is not True:
             raise ValueError('宿主尚未实际完成复核：' + key)
+    checks = review.get('image_checks')
+    if not isinstance(checks, list) or len(checks) != len(entries):
+        raise ValueError('必须逐张完成文字与排版检查，不能漏检')
+    for inspection, entry in zip(checks, entries):
+        if not isinstance(inspection, dict) or any(inspection.get(k) != entry.get(k) for k in ('file', 'source_index', 'sha256')):
+            raise ValueError('逐图核对记录对应旧图片或错页')
+        if (inspection.get('text_correct') is not True or inspection.get('layout_passed') is not True
+                or inspection.get('issues') != []):
+            raise ValueError('图片文字或排版未通过，需修正后重新检查')
+        if not isinstance(inspection.get('notes'), str) or not inspection['notes'].strip():
+            raise ValueError('逐图检查需有实际核对说明')
     if not isinstance(review.get('notes'), str) or not review['notes'].strip():
         raise ValueError('复核需有实际核对说明')
     if not images.get('template'):
