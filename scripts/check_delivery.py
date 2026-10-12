@@ -9,6 +9,7 @@ from PIL import Image
 from render_cards import read_json, validate, local_asset
 from workflow_common import content_digest, count_text, work_key
 from reorganization import card_sources
+from article_layout import check_layout
 
 
 def check(content_path, manifest_path, image_report_path, text_root):
@@ -84,10 +85,22 @@ def check(content_path, manifest_path, image_report_path, text_root):
         raise ValueError('图片报告缺少整组风格标识')
     if smart and review.get('reorganization_reviewed') is not True:
         raise ValueError('智能重组需核对去重等价性、信息完整性与连贯性')
+    relative=review.get('article_layout_report','article-layout/article-layout-report.json')
+    if not isinstance(relative,str): raise ValueError('文章排版报告路径不合法')
+    layout_report=local_asset(root,relative)
+    if review.get('article_layout_reviewed') is not True or review.get('article_layout_report_sha256')!=hashlib.sha256(layout_report.read_bytes()).hexdigest():
+        raise ValueError('文章排版尚未实际查看或复核记录过期')
+    layout_files=check_layout(article,layout_report)
+    layout=json.loads(layout_report.read_text(encoding='utf-8-sig'))
+    requested=content.get('article_theme','both')
+    required={'red-black','orange-black'} if requested=='both' else {requested}
+    if {entry['theme'] for entry in layout['files']}!=required:
+        raise ValueError('文章排版主题与用户选择不一致')
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
             'title_count': 3, 'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
+            'article_layout_files': layout_files,
             'semantic_verification': 'host_review_attestation_not_automatic_detection'}
 
 

@@ -14,6 +14,7 @@ from workflow_common import content_digest, count_text, work_key
 from style_registry import reserve
 from render_cards import choose_style, render
 from browser_extract import dom_query, host_matches, CDNS
+from article_layout import render_article
 
 
 class DeliveryTests(unittest.TestCase):
@@ -57,6 +58,13 @@ class DeliveryTests(unittest.TestCase):
             images_visually_reviewed=True,cleanup_reviewed=True,notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
                                text_correct=True,layout_passed=True,issues=[],notes='合成测试图，仅检查门禁')]))
+        if 580<=length<=620:
+            output=self.root/f'layout-{len(list(self.root.glob("layout-*")))}'
+            render_article(self.root/'article.txt',output,mobile=False)
+            review=json.loads((self.root/'text-review.json').read_text(encoding='utf-8'))
+            review.update(article_layout_reviewed=True,article_layout_report=str((output/'article-layout-report.json').relative_to(self.root)),
+                          article_layout_report_sha256=self.sha(output/'article-layout-report.json'))
+            self.write(self.root/'text-review.json',review)
 
     def run_check(self):
         return check(self.root/'content.json',self.source/'manifest.json',self.out/'review.json',self.root)
@@ -96,6 +104,22 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(self.run_check()['caption_paragraphs'],count)
         self.texts(600,caption='第一段。\r\n\r\n第二段。')
         self.assertEqual(self.run_check()['caption_paragraphs'],2)
+
+    def test_article_layout_review_and_requested_theme_block(self):
+        p=self.root/'text-review.json'
+        review=json.loads(p.read_text(encoding='utf-8'))
+        self.write(p,dict(review,article_layout_reviewed=False))
+        with self.assertRaisesRegex(ValueError,'排版'): self.run_check()
+        self.write(p,dict(review,article_layout_report_sha256='old'))
+        with self.assertRaisesRegex(ValueError,'过期'): self.run_check()
+        self.content['article_theme']='orange-black'
+        self.write(self.root/'content.json',self.content)
+        report=copy.deepcopy(self.image_report)
+        report['content_sha256']=content_digest(self.content)
+        self.write(self.out/'review.json',report)
+        review['content_sha256']=content_digest(self.content)
+        self.write(p,review)
+        with self.assertRaisesRegex(ValueError,'主题'): self.run_check()
 
     def test_stale_texts_scope_and_extra_files_block(self):
         (self.root/'article.txt').write_text('新'*600,encoding='utf-8')

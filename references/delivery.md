@@ -12,6 +12,8 @@
 
 ## text-review.json
 
+文章排版必须完成：默认红黑/橙黑两套，content.article_theme指定单套时匹配其选择。text-review.json记录article_layout_reviewed=true、article_layout_report（文字目录内的相对路径）、article_layout_report_sha256，绑定实际查看后的排版报告。check_delivery.py核验正文一致性、主题、文件哈希和兼容结构，再把两版HTML及预览加入最终清单；旧复核不能用于新正文或新排版。
+
 必须按 [image-quality.md](image-quality.md) 逐张核查最终图片的文字与排版，增加image_checks，记录实际文件、源页码、图片哈希、text_correct、layout_passed、issues和notes。漏检、有未解决问题或旧版本核对均阻断交付。
 
 记录content_sha256、selected_indices、text_sha256；facts_reviewed、scope_reviewed、titles_reviewed、images_visually_reviewed、cleanup_reviewed只有实际核对后才true；notes写实际逐句/逐图核对说明。

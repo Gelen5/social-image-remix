@@ -9,7 +9,7 @@ def package(output):
     files = [root / name for name in ("SKILL.md", "README.md", "requirements.txt", "LICENSE", "VALIDATION.md")]
     for directory in ("scripts", "references", "agents", "tests"):
         files.extend(p for p in (root / directory).rglob("*")
-                     if p.is_file() and p.suffix in (".py", ".md", ".yaml") and "__pycache__" not in p.parts)
+                     if p.is_file() and p.suffix in (".py", ".md", ".yaml", ".html", ".json") and "__pycache__" not in p.parts)
     for path in files:
         if not path.is_file():
             raise FileNotFoundError(path)

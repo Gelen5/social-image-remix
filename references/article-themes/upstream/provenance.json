@@ -1,0 +1,26 @@
+{
+  "repository": "Gelen5/customer-write",
+  "commit": "660a613c72c22eb269fd47f8e8e6056eebb15052",
+  "files": [
+    {
+      "local_file": "README.md",
+      "source_path": "references/templates/README.md",
+      "git_blob_sha": "02c34070f11fa56291b75e28d93718b0894ab11e"
+    },
+    {
+      "local_file": "red-black.html",
+      "source_path": "references/templates/样文正文_红黑版(red-black).html",
+      "git_blob_sha": "8d10d003d2cc962d1fa6670083b63778a008c850"
+    },
+    {
+      "local_file": "orange-black.html",
+      "source_path": "references/templates/样文正文_橙黑版(orange-black).html",
+      "git_blob_sha": "3f872e3fd8c44f62ec145108016087b64ccacd4e"
+    },
+    {
+      "local_file": "LICENSE.md",
+      "source_path": "LICENSE",
+      "git_blob_sha": "5e21560ca6ad99b77fd906c3519b7367806bd12e"
+    }
+  ]
+}
