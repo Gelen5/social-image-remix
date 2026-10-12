@@ -10,6 +10,7 @@ from render_cards import read_json, validate, local_asset
 from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIMER
 from reorganization import card_sources
 from article_layout import check_layout
+from topic_tags import check_topics
 
 
 def check(content_path, manifest_path, image_report_path, text_root):
@@ -100,11 +101,14 @@ def check(content_path, manifest_path, image_report_path, text_root):
     required={'red-black','orange-black'} if requested=='both' else {requested}
     if {entry['theme'] for entry in layout['files']}!=required:
         raise ValueError('文章排版主题与用户选择不一致')
+    topics=check_topics(root,content,review)
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
             'title_count': 3, 'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
             'article_layout_files': layout_files,
+            'topic_tag_files':topics['files'],'topic_tag_count':5,'topic_index_status':topics['data_status'],
+            'topic_index_notice':topics['notice'],
             'semantic_verification': 'host_review_attestation_not_automatic_detection'}
 
 

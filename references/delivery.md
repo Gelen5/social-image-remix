@@ -14,6 +14,8 @@ cards每项必须有disclaimer="仅作信息分享 不涉及任何招聘"；每�
 
 ## text-review.json
 
+默认还需topics.txt（5个独立标签）与topics.json，来源和范围按topic-tags.md。text-review.json记录topics_reviewed=true和topics_sha256，绑定实际核对后的标签版本；交付检查纳入5词、范围、指数状态与证据一致性。标签和数据边界说明单独交付，不计配文/文章字数。
+
 文章排版必须完成：默认红黑/橙黑两套，content.article_theme指定单套时匹配其选择。text-review.json记录article_layout_reviewed=true、article_layout_report（文字目录内的相对路径）、article_layout_report_sha256，绑定实际查看后的排版报告。check_delivery.py核验正文一致性、主题、文件哈希和兼容结构，再把两版HTML及预览加入最终清单；旧复核不能用于新正文或新排版。
 
 必须按 [image-quality.md](image-quality.md) 逐张核查最终图片的文字与排版，增加image_checks，记录实际文件、源页码、图片哈希、text_correct、layout_passed、issues和notes。漏检、有未解决问题或旧版本核对均阻断交付。

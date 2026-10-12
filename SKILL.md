@@ -97,6 +97,8 @@ python scripts/render_cards.py render --content "任务目录/content.json" --ma
 
 ### 5. 配套文章与交付
 
+默认另按 [references/topic-tags.md](references/topic-tags.md) 输出5个与最终图片内容匹配的话题标签。先筛相关候选，有实际核验的微信指数证据才参考其热度；指数不是搜索次数。无数据时明确标为“未验证微信指数”，不编热度；用户要求真实指数必需时说明阻碍，不能降级冒充通过。标签单独展示，不占配文200字/5段。topic_tags.py支持截图转录/导出/服务原始返回导入，尚不提供已验证实时自动查询；实际核对后记录topics_reviewed及topics_sha256，再做交付检查。
+
 文章正文核对后按 [references/article-themes/README.md](references/article-themes/README.md) 接入customer-write红黑/橙黑正文排版。默认同文两版，用户指定则一版；仅改变文章HTML，不影响图片或配文。先按语义为重点写article-layout.json，再运行article_layout.py。查看手机预览和强调效果，实际完成后才标article_layout_reviewed，并记录排版报告路径/哈希。三标题仍单独交付，不进正文；排版不得更改正文或带入样文内容。
 
 进入交付前必须执行 [references/image-quality.md](references/image-quality.md)：逐张打开最终输出图片，对照原图及清理后文案核查文字正确性，再检查排版。错别字、乱码、漏字、错数字、溢出、截断、重叠、遮挡或手机不可读均为阻断项，先修正/重生成，再检查修改后的实际文件。不能仅凭生图成功或脚本返回成功交付。逐图检查写入text-review.json的image_checks，绑定输出文件哈希；原图疑似笔误或陌生缩写不能猜测，明确标出待确认，不宣称没有错误。

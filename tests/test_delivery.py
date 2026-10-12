@@ -15,6 +15,7 @@ from style_registry import reserve
 from render_cards import choose_style, render
 from browser_extract import dom_query, host_matches, CDNS
 from article_layout import render_article
+from topic_tags import select_tags,tag_line
 
 
 class DeliveryTests(unittest.TestCase):
@@ -53,9 +54,15 @@ class DeliveryTests(unittest.TestCase):
         (self.root/'article.txt').write_text('文'*length,encoding='utf-8')
         (self.root/'caption.txt').write_text(caption,encoding='utf-8')
         self.write(self.root/'titles.json',titles if titles is not None else ['标题一','标题二','标题三'])
+        scope=self.content.get('selected_indices',[1])
+        candidate={'content_sha256':content_digest(self.content),'relevance_reviewed':True,'candidates':[
+            {'keyword':word,'relevance_score':.8,'source_indices':scope,'reason':'合成测试词，仅测试交付门禁'} for word in ['本科','学历','岗位','求职','就业']]}
+        result=select_tags(self.content,candidate)
+        self.write(self.root/'topics.json',result)
+        (self.root/'topics.txt').write_text(tag_line(result),encoding='utf-8')
         self.write(self.root/'text-review.json',dict(content_sha256=content_digest(self.content),selected_indices=[1],
             text_sha256=text_signature(self.root),facts_reviewed=True,scope_reviewed=True,titles_reviewed=True,
-            images_visually_reviewed=True,cleanup_reviewed=True,notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
+            images_visually_reviewed=True,cleanup_reviewed=True,topics_reviewed=True,topics_sha256=self.sha(self.root/'topics.json'),notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
                                text_correct=True,layout_passed=True,disclaimer_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
         if 580<=length<=620:
