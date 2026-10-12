@@ -10,6 +10,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from browser_extract import extract_url, decode_json, dom_query
 from render_cards import validate, choose_style, card_html, locked_text, render
+from workflow_common import IMAGE_DISCLAIMER
 
 
 class WorkflowTests(unittest.TestCase):
@@ -138,6 +139,14 @@ class WorkflowTests(unittest.TestCase):
             self.assertIn("2027届及以后毕业", markup)
             self.assertIn("原文含&lt;特殊符号&gt;", markup)
             self.assertIn("#2375bd", markup)
+            self.assertIn(IMAGE_DISCLAIMER, markup)
+            self.assertEqual(report['cards'][index-1]['disclaimer'],IMAGE_DISCLAIMER)
+
+    def test_existing_exact_disclaimer_not_duplicated(self):
+        card=copy.deepcopy(self.content['cards'][0])
+        card['footer']=IMAGE_DISCLAIMER
+        markup=card_html(card,{'template':'editorial-blue'},self.root)
+        self.assertEqual(markup.count(IMAGE_DISCLAIMER),1)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 from PIL import Image
 from render_cards import read_json, validate, local_asset
-from workflow_common import content_digest, count_text, work_key
+from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIMER
 from reorganization import card_sources
 from article_layout import check_layout
 
@@ -31,6 +31,8 @@ def check(content_path, manifest_path, image_report_path, text_root):
         raise ValueError('输出图片范围与selected_indices不一致')
     actual_files = []
     for entry, card in zip(entries, content['cards']):
+        if entry.get('disclaimer') != IMAGE_DISCLAIMER:
+            raise ValueError('每张二创图必须有准确的固定信息分享脚注')
         if not smart and entry.get('source_image') != card['source_image']:
             raise ValueError('图片原图对应不一致')
         path = local_asset(report_path.parent, entry['file'])
@@ -77,6 +79,8 @@ def check(content_path, manifest_path, image_report_path, text_root):
         if (inspection.get('text_correct') is not True or inspection.get('layout_passed') is not True
                 or inspection.get('issues') != []):
             raise ValueError('图片文字或排版未通过，需修正后重新检查')
+        if inspection.get('disclaimer_reviewed') is not True:
+            raise ValueError('需逐张确认固定脚注准确、清晰且不遮挡正文')
         if not isinstance(inspection.get('notes'), str) or not inspection['notes'].strip():
             raise ValueError('逐图检查需有实际核对说明')
     if not isinstance(review.get('notes'), str) or not review['notes'].strip():

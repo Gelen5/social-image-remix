@@ -4,6 +4,8 @@ import json
 import re
 from urllib.parse import urlparse
 
+IMAGE_DISCLAIMER = '仅作信息分享 不涉及任何招聘'
+
 
 def content_digest(content):
     return hashlib.sha256(json.dumps(content, ensure_ascii=False, sort_keys=True).encode()).hexdigest()

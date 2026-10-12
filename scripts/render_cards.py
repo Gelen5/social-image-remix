@@ -6,7 +6,7 @@ import html
 import json
 from pathlib import Path
 import sys
-from workflow_common import content_digest, work_key
+from workflow_common import content_digest, work_key, IMAGE_DISCLAIMER
 from reorganization import check_reorganization, card_sources
 
 TEMPLATES = {
@@ -27,7 +27,8 @@ def locked_text(card):
         text.append(block["heading"])
         for field in block.get("fields", []):
             text.extend((field["label"], field["text"]))
-    return text + [card["footer"]]
+    footer = '' if card['footer'].strip() == IMAGE_DISCLAIMER else card['footer']
+    return text + [footer, IMAGE_DISCLAIMER]
 
 
 def local_asset(root, value):
@@ -148,6 +149,7 @@ h2{{margin:0;padding:9px 18px;font-size:calc(var(--body-size,26px) * 1.35);line-
 .details{{padding:12px 18px;flex:1;min-height:0;font-size:var(--body-size,26px);line-height:1.42}} .field{{margin-bottom:8px;white-space:pre-wrap;overflow-wrap:anywhere}} .field:last-child{{margin-bottom:0}} .label{{font-weight:800}} .insert{{max-width:100%;max-height:150px;object-fit:contain;display:block;margin:5px auto}}
 footer{{flex-shrink:0;font-size:27px;font-weight:800;border-top:2px solid {t['accent']};padding-top:12px;line-height:1.3;white-space:pre-wrap}}
 .verbatim{{white-space:pre-wrap}}
+.disclaimer{{flex-shrink:0;font-size:22px;line-height:1.4;color:{t['ink']};font-weight:400;text-align:right;margin-top:0;white-space:nowrap}}
 """
     if style["template"] == "paper-plum":
         css += "header{border-bottom-style:double;border-bottom-width:6px}.panel{flex-direction:row}h2{width:200px;flex-shrink:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px}.details{min-width:0}"
@@ -155,10 +157,11 @@ footer{{flex-shrink:0;font-size:27px;font-weight:800;border-top:2px solid {t['ac
         css += f".panel{{border-left:10px solid {t['accent']}}}h2{{background:transparent;color:{t['ink']};border-bottom:1px dashed {t['accent']};padding:8px 18px}}header{{border-bottom-style:dashed}}"
     elif style["template"] == "warm-magazine":
         css += "header{text-align:center}h1{font-size:74px}h2{border-radius:0 24px 24px 0;width:fit-content;min-width:260px;padding-right:36px}footer{text-align:center}"
-    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>' + css + '</style><body><article class="card"><header>' + verbatim(card['title'], 'h1') + verbatim(card['subtitle'], cls='subtitle') + '</header><main>' + ''.join(panels) + '</main>' + verbatim(card['footer'], 'footer') + '</article></body></html>'
+    footer = '' if card['footer'].strip() == IMAGE_DISCLAIMER else card['footer']
+    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>' + css + '</style><body><article class="card"><header>' + verbatim(card['title'], 'h1') + verbatim(card['subtitle'], cls='subtitle') + '</header><main>' + ''.join(panels) + '</main>' + verbatim(footer, 'footer') + verbatim(IMAGE_DISCLAIMER, 'aside', 'disclaimer') + '</article></body></html>'
 
 
-OVERFLOW_JS = """() => [...document.querySelectorAll('.card,header,main,.panel,.details,footer,.field')].filter(e => e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2).map(e => e.className || e.tagName)"""
+OVERFLOW_JS = """() => [...document.querySelectorAll('.card,header,main,.panel,.details,footer,.field,.disclaimer')].filter(e => e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2).map(e => e.className || e.tagName)"""
 
 
 def render(args):
@@ -220,6 +223,7 @@ def render(args):
                     sources = card_sources(content, manifest)[index-1]
                     record = {"file": png.name, "source_indices": sources, "width": dimensions[0], "height": dimensions[1],
                                             "sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
+                                            "disclaimer": IMAGE_DISCLAIMER,
                                             "text_match": True, "overflow": False}
                     if content.get('mode', 'faithful') != 'smart':
                         record.update(source_index=sources[0], source_image=card['source_image'])

@@ -10,7 +10,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
 from check_delivery import check, text_signature
-from workflow_common import content_digest, count_text, work_key
+from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIMER
 from style_registry import reserve
 from render_cards import choose_style, render
 from browser_extract import dom_query, host_matches, CDNS
@@ -34,7 +34,7 @@ class DeliveryTests(unittest.TestCase):
                          'images':[{'index':1,'file':'01.png','sha256':self.sha(self.source/'01.png')}]}
         self.image_report = {'passed':True,'template':'test-design','work_key':work_key(self.content['source_url']),
                              'content_sha256':content_digest(self.content),'cards':[{'source_index':1,'source_image':'01.png',
-                             'file':'01.png','sha256':self.sha(self.out/'01.png')}]}
+                             'file':'01.png','sha256':self.sha(self.out/'01.png'),'disclaimer':IMAGE_DISCLAIMER}]}
         self.write(self.root/'content.json',self.content)
         self.write(self.source/'manifest.json',self.manifest)
         self.write(self.out/'review.json',self.image_report)
@@ -57,7 +57,7 @@ class DeliveryTests(unittest.TestCase):
             text_sha256=text_signature(self.root),facts_reviewed=True,scope_reviewed=True,titles_reviewed=True,
             images_visually_reviewed=True,cleanup_reviewed=True,notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
-                               text_correct=True,layout_passed=True,issues=[],notes='合成测试图，仅检查门禁')]))
+                               text_correct=True,layout_passed=True,disclaimer_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
         if 580<=length<=620:
             output=self.root/f'layout-{len(list(self.root.glob("layout-*")))}'
             render_article(self.root/'article.txt',output,mobile=False)
@@ -87,7 +87,7 @@ class DeliveryTests(unittest.TestCase):
     def test_each_image_quality_review_required_and_version_bound(self):
         p=self.root/'text-review.json'
         original=json.loads(p.read_text(encoding='utf-8'))
-        for change in ({'text_correct':False}, {'layout_passed':False}, {'issues':['标题溢出']}, {'sha256':'old'}, {'notes':''}):
+        for change in ({'text_correct':False}, {'layout_passed':False}, {'disclaimer_reviewed':False}, {'issues':['标题溢出']}, {'sha256':'old'}, {'notes':''}):
             record=copy.deepcopy(original)
             record['image_checks'][0].update(change)
             self.write(p,record)
@@ -97,6 +97,13 @@ class DeliveryTests(unittest.TestCase):
             with self.assertRaises(ValueError): self.run_check()
         self.write(p,original)
         self.assertTrue(self.run_check()['passed'])
+
+    def test_disclaimer_missing_or_changed_blocks(self):
+        for value in (None,'仅作信息分享','不涉及任何招聘'):
+            report=copy.deepcopy(self.image_report)
+            report['cards'][0]['disclaimer']=value
+            self.write(self.out/'review.json',report)
+            with self.assertRaisesRegex(ValueError,'脚注'): self.run_check()
 
     def test_caption_semantic_paragraph_count(self):
         for count in (1, 2, 5):
