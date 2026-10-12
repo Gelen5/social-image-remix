@@ -8,6 +8,7 @@ import sys
 from PIL import Image
 from render_cards import read_json, validate, local_asset
 from workflow_common import content_digest, count_text, work_key
+from reorganization import card_sources
 
 
 def check(content_path, manifest_path, image_report_path, text_root):
@@ -23,11 +24,13 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if images.get('work_key') != work_key(content['source_url']):
         raise ValueError('图片报告作品不一致')
     entries = images.get('cards', [])
-    if [e.get('source_index') for e in entries] != selected:
+    smart = content.get('mode', 'faithful') == 'smart'
+    mappings = [e.get('source_indices') if smart else [e.get('source_index')] for e in entries]
+    if mappings != card_sources(content, manifest):
         raise ValueError('输出图片范围与selected_indices不一致')
     actual_files = []
     for entry, card in zip(entries, content['cards']):
-        if entry.get('source_image') != card['source_image']:
+        if not smart and entry.get('source_image') != card['source_image']:
             raise ValueError('图片原图对应不一致')
         path = local_asset(report_path.parent, entry['file'])
         if path in actual_files:
@@ -67,7 +70,8 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if not isinstance(checks, list) or len(checks) != len(entries):
         raise ValueError('必须逐张完成文字与排版检查，不能漏检')
     for inspection, entry in zip(checks, entries):
-        if not isinstance(inspection, dict) or any(inspection.get(k) != entry.get(k) for k in ('file', 'source_index', 'sha256')):
+        keys = ('file', 'source_indices', 'sha256') if smart else ('file', 'source_index', 'sha256')
+        if not isinstance(inspection, dict) or any(inspection.get(k) != entry.get(k) for k in keys):
             raise ValueError('逐图核对记录对应旧图片或错页')
         if (inspection.get('text_correct') is not True or inspection.get('layout_passed') is not True
                 or inspection.get('issues') != []):
@@ -78,9 +82,11 @@ def check(content_path, manifest_path, image_report_path, text_root):
         raise ValueError('复核需有实际核对说明')
     if not images.get('template'):
         raise ValueError('图片报告缺少整组风格标识')
+    if smart and review.get('reorganization_reviewed') is not True:
+        raise ValueError('智能重组需核对去重等价性、信息完整性与连贯性')
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
-            'title_count': 3, 'images': [str(p) for p in actual_files],
+            'title_count': 3, 'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
             'semantic_verification': 'host_review_attestation_not_automatic_detection'}
 

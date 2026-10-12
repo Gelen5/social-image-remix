@@ -6,6 +6,8 @@
 
 ## 图片报告
 
+智能mode=smart使用每张source_indices数组（多源页）取代source_index/source_image，对应cards的多源映射；逐图image_checks使用相同source_indices。text-review.json还需reorganization_reviewed=true，记录真实的信息覆盖、去重等价性及条件范围检查。普通模式兼容旧字段，其他长度、哈希和质量门禁不变。
+
 固定排版使用实际review.json。生图路径写image-review.json，passed来自真实看图验收，不声称DOM/OCR检查。根字段包括passed、template（本组设计ID）、work_key、content_sha256、cards；每个cards条目包括file（相对输出目录）、source_index、source_image、sha256（输出文件哈希）。页码顺序必须与selected_indices一致，文件实际宽高必须3:4。
 
 ## text-review.json

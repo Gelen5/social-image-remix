@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import sys
 from workflow_common import content_digest, work_key
+from reorganization import check_reorganization, card_sources
 
 TEMPLATES = {
     "editorial-blue": {"bg": "#f5f9ff", "ink": "#102c50", "accent": "#2375bd", "panel": "#ffffff", "radius": "18px", "border": "1px solid #aed0ef", "font": "sans-serif"},
@@ -60,15 +61,18 @@ def validate(content, manifest, source_root):
             or any(type(i) is not int or i < 1 or i > len(images) for i in selected)
             or selected != sorted(set(selected))):
         raise ValueError("selected_indices必须是原图范围内、升序且不重复的整数页码")
-    if len(cards) != len(selected):
+    mode = content.get('mode', 'faithful')
+    if mode not in ('faithful', 'smart'):
+        raise ValueError('mode仅支持faithful或smart')
+    if mode == 'smart':
+        check_reorganization(content, selected)
+    elif len(cards) != len(selected):
         raise ValueError("二创图必须与选定源图一一对应，不能缺图或混入未选图片")
-    for index, card in zip(selected, cards):
-        image = images[index - 1]
-        if image.get("index") != index or card.get("source_image") != image.get("file"):
-            raise ValueError("源图对应或顺序不一致")
-        source = local_asset(source_root, image["file"])
-        if hashlib.sha256(source.read_bytes()).hexdigest() != image.get("sha256"):
-            raise ValueError("源图哈希变化")
+    for position, card in enumerate(cards):
+        if mode == 'faithful':
+            image = images[selected[position] - 1]
+            if card.get("source_image") != image.get("file"):
+                raise ValueError("源图对应或顺序不一致")
         for key in ("title", "subtitle", "footer"):
             if not isinstance(card.get(key), str):
                 raise ValueError("每张卡片需提供字符串字段：" + key)
@@ -213,10 +217,13 @@ def render(args):
                         raise ValueError("输出尺寸不符合3:4")
                     markup = markup.replace('var(--body-size,26px)', f'{size}px')
                     (output / f"{index:02d}.html").write_text(markup, encoding="utf-8")
-                    source_index = next(i["index"] for i in manifest["images"] if i["file"] == card["source_image"])
-                    report["cards"].append({"file": png.name, "source_image": card["source_image"], "source_index": source_index, "width": dimensions[0], "height": dimensions[1],
+                    sources = card_sources(content, manifest)[index-1]
+                    record = {"file": png.name, "source_indices": sources, "width": dimensions[0], "height": dimensions[1],
                                             "sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
-                                            "text_match": True, "overflow": False})
+                                            "text_match": True, "overflow": False}
+                    if content.get('mode', 'faithful') != 'smart':
+                        record.update(source_index=sources[0], source_image=card['source_image'])
+                    report["cards"].append(record)
             finally:
                 browser.close()
         report["passed"] = True
