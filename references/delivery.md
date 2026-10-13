@@ -12,6 +12,10 @@ cards每项必须有disclaimer_decision，与当前content逐张判断完全一�
 
 固定排版使用实际review.json。生图路径写image-review.json，passed来自真实看图验收，不声称DOM/OCR检查。根字段包括passed、template（本组设计ID）、work_key、content_sha256、cards；每个cards条目包括file（相对输出目录）、source_index、source_image、sha256（输出文件哈希）。页码顺序必须与selected_indices一致，文件实际宽高必须3:4。
 
+## 文案表达门禁
+
+配文不得重复信息分享/招聘免责声明或官方信息兜底句；文章不得以图片页码、这组图、图中资料等指代组织正文。check_delivery.py拦截已知固定表达及常见页码变体，宿主还需逐段检查同义兜底句和脱离图片的独立可读性；正则不等于全面语义判断。核对说明写notes，改文后重建文字签名与文章排版报告，不复用旧版复核。图片提示语判定与本项分开执行。
+
 ## text-review.json
 
 默认还需topics.txt（5个独立标签）与topics.json，来源和范围按topic-tags.md。text-review.json记录topics_reviewed=true和topics_sha256，绑定实际核对后的标签版本；交付检查纳入5词、范围、指数状态与证据一致性。标签和数据边界说明单独交付，不计配文/文章字数。

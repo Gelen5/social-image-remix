@@ -14,6 +14,14 @@ from topic_tags import check_topics
 from disclaimer import decision, added_note
 
 
+def check_copy_style(caption, article):
+    # Catch known regressions; semantic independence still needs host review.
+    if re.search(r'仅[作做供为]信息分享|不涉及(?:任何)?招聘|以(?:企业)?官方(?:信息|公告|发布|要求)为准|岗位是否开放', caption):
+        raise ValueError('贴图配文不要重复信息分享、招聘免责声明或官方信息兜底句')
+    if re.search(r'第[一二三四五六七八九十百零两\d]+张(?:图片|配图|图)|(?:这|本)(?:组(?:[一二三四五六七八九十两\d]+张)?|(?:[一二三四五六七八九十两\d]+)?张)(?:图片|配图|图)|图中(?:资料|信息|内容|列出|提到|标注)|上图|下图|如图所示|见图', article):
+        raise ValueError('文章必须独立阅读，不能用图片页码或依赖配图的指代组织正文')
+
+
 def check(content_path, manifest_path, image_report_path, text_root):
     content = read_json(content_path)
     manifest = read_json(manifest_path)
@@ -54,6 +62,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     root = Path(text_root).resolve()
     caption = (root/'caption.txt').read_text(encoding='utf-8-sig').strip()
     article = (root/'article.txt').read_text(encoding='utf-8-sig').strip()
+    check_copy_style(caption, article)
     titles = read_json(root/'titles.json')
     paragraphs = [p.strip() for p in re.split(r'[\r\n]+', caption) if p.strip()]
     if not 1 <= len(paragraphs) <= 5 or not 1 <= count_text(caption) <= 200:

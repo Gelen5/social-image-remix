@@ -9,7 +9,7 @@ import unittest
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
-from check_delivery import check, text_signature
+from check_delivery import check, text_signature, check_copy_style
 from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIMER
 from style_registry import reserve
 from render_cards import choose_style, render
@@ -44,6 +44,21 @@ class DeliveryTests(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_caption_without_boilerplate_and_article_independent_of_images(self):
+        for value in ('仅作信息分享，不涉及招聘。','仅供信息分享。','以企业官方信息为准。','岗位是否开放，请自行确认。'):
+            with self.subTest(caption=value),self.assertRaisesRegex(ValueError,'配文'):
+                check_copy_style(value,'按行业和岗位方向介绍企业。')
+        for value in ('第一张图适合技术专业。','第2张图片列出企业。','这组三张图整理企业。','这三张图提供方向。','图中资料提到实习。','如图所示。'):
+            with self.subTest(article=value),self.assertRaisesRegex(ValueError,'独立阅读'):
+                check_copy_style('留学生实习方向清单。',value)
+        check_copy_style('2027届实习方向，涵盖技术、市场和供应链。',
+                         '图像算法属于技术方向，第二季度安排需按实际材料确认。')
+        self.texts(600,caption='仅作信息分享。')
+        with self.assertRaisesRegex(ValueError,'配文'):self.run_check()
+        self.texts(600)
+        (self.root/'article.txt').write_text('第一张图'+'文'*596,encoding='utf-8')
+        with self.assertRaisesRegex(ValueError,'独立阅读'):self.run_check()
 
     def sha(self,p):
         return hashlib.sha256(p.read_bytes()).hexdigest()
