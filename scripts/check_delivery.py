@@ -11,7 +11,7 @@ from workflow_common import content_digest, count_text, work_key
 from reorganization import card_sources
 from article_layout import check_layout
 from topic_tags import check_topics
-from disclaimer import decision, added_note
+from disclaimer import decision, added_note, footer_parts, check_styles
 
 
 def check_copy_style(caption, article):
@@ -59,6 +59,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     extras = set(report_path.parent.glob('*.png')) - set(actual_files)
     if extras:
         raise ValueError('输出目录有未列入报告的旧PNG，请使用独立目录')
+    check_styles(images, content['cards'])
     root = Path(text_root).resolve()
     caption = (root/'caption.txt').read_text(encoding='utf-8-sig').strip()
     article = (root/'article.txt').read_text(encoding='utf-8-sig').strip()
@@ -85,7 +86,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     checks = review.get('image_checks')
     if not isinstance(checks, list) or len(checks) != len(entries):
         raise ValueError('必须逐张完成文字与排版检查，不能漏检')
-    for inspection, entry in zip(checks, entries):
+    for inspection, entry, card in zip(checks, entries, content['cards']):
         keys = ('file', 'source_indices', 'sha256') if smart else ('file', 'source_index', 'sha256')
         if not isinstance(inspection, dict) or any(inspection.get(k) != entry.get(k) for k in keys):
             raise ValueError('逐图核对记录对应旧图片或错页')
@@ -94,6 +95,8 @@ def check(content_path, manifest_path, image_report_path, text_root):
             raise ValueError('图片文字或排版未通过，需修正后重新检查')
         if inspection.get('disclaimer_reviewed') is not True:
             raise ValueError('需逐张确认脚注语义判断正确，应加则准确清晰无遮挡，并保留原图必要声明')
+        if footer_parts(card)[1] and inspection.get('disclaimer_style_reviewed') is not True:
+            raise ValueError('需逐张实际比较提示语字体样式、字号、字重与整组是否一致')
         if not isinstance(inspection.get('notes'), str) or not inspection['notes'].strip():
             raise ValueError('逐图检查需有实际核对说明')
     if not isinstance(review.get('notes'), str) or not review['notes'].strip():

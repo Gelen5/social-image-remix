@@ -16,6 +16,7 @@ from render_cards import choose_style, render
 from browser_extract import dom_query, host_matches, CDNS
 from article_layout import render_article
 from topic_tags import select_tags,tag_line
+from disclaimer import check_styles
 
 
 class DeliveryTests(unittest.TestCase):
@@ -34,9 +35,10 @@ class DeliveryTests(unittest.TestCase):
         self.content['cards'][0]['disclaimer_decision'] = {'required': True, 'classification': 'recruitment', 'reason': '本张说明招聘学历条件', 'evidence': ['招聘学历条件测试', '学历：本科']}
         self.manifest = {'complete':True,'expected_count':1,'errors':[], 'source_url':self.content['source_url'],
                          'images':[{'index':1,'file':'01.png','sha256':self.sha(self.source/'01.png')}]}
+        self.disclaimer_style = dict(font_family='Microsoft YaHei',font_size_px_at_1080=22,font_weight=400,color='#143a26',alignment='center',bottom_margin_px_at_1080=36,line_height=1.4)
         self.image_report = {'passed':True,'template':'test-design','work_key':work_key(self.content['source_url']),
                              'content_sha256':content_digest(self.content),'cards':[{'source_index':1,'source_image':'01.png',
-                             'file':'01.png','sha256':self.sha(self.out/'01.png'),'disclaimer':IMAGE_DISCLAIMER,'disclaimer_decision':self.content['cards'][0]['disclaimer_decision']}]}
+                             'file':'01.png','sha256':self.sha(self.out/'01.png'),'disclaimer':IMAGE_DISCLAIMER,'disclaimer_decision':self.content['cards'][0]['disclaimer_decision'],'disclaimer_style':copy.deepcopy(self.disclaimer_style)}], 'disclaimer_style':self.disclaimer_style}
         self.write(self.root/'content.json',self.content)
         self.write(self.source/'manifest.json',self.manifest)
         self.write(self.out/'review.json',self.image_report)
@@ -44,6 +46,26 @@ class DeliveryTests(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_disclaimer_style_is_locked_across_visible_pages(self):
+        report=copy.deepcopy(self.image_report)
+        report['cards'].append(copy.deepcopy(report['cards'][0]))
+        cards=[self.content['cards'][0],copy.deepcopy(self.content['cards'][0])]
+        check_styles(report,cards)
+        for field,value in [('font_family','AnotherFont'),('font_size_px_at_1080',24),
+                            ('font_weight',700),('color','#888888'),('alignment','right'),
+                            ('bottom_margin_px_at_1080',24),('line_height',1.8)]:
+            changed=copy.deepcopy(report)
+            changed['cards'][1]['disclaimer_style'][field]=value
+            with self.subTest(field=field),self.assertRaisesRegex(ValueError,'样式一致'):
+                check_styles(changed,cards)
+        for value in (None,{},dict(self.disclaimer_style,font_size_px_at_1080=float('nan'))):
+            with self.assertRaises(ValueError):check_styles(dict(report,disclaimer_style=value),cards)
+        general=copy.deepcopy(cards[0])
+        general['disclaimer_decision']=dict(required=False,classification='general',reason='通用方法',evidence=['简历写法'])
+        check_styles({'cards':[{}]},[general])
+        general['footer']=IMAGE_DISCLAIMER
+        with self.assertRaises(ValueError):check_styles({'cards':[{}]},[general])
 
     def test_caption_without_boilerplate_and_article_independent_of_images(self):
         for value in ('仅作信息分享，不涉及招聘。','仅供信息分享。','以企业官方信息为准。','岗位是否开放，请自行确认。'):
@@ -80,7 +102,7 @@ class DeliveryTests(unittest.TestCase):
             text_sha256=text_signature(self.root),facts_reviewed=True,scope_reviewed=True,titles_reviewed=True,
             images_visually_reviewed=True,cleanup_reviewed=True,topics_reviewed=True,topics_sha256=self.sha(self.root/'topics.json'),notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
-                               text_correct=True,layout_passed=True,disclaimer_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
+                               text_correct=True,layout_passed=True,disclaimer_reviewed=True,disclaimer_style_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
         if 580<=length<=620:
             output=self.root/f'layout-{len(list(self.root.glob("layout-*")))}'
             render_article(self.root/'article.txt',output,mobile=False)
@@ -110,7 +132,7 @@ class DeliveryTests(unittest.TestCase):
     def test_each_image_quality_review_required_and_version_bound(self):
         p=self.root/'text-review.json'
         original=json.loads(p.read_text(encoding='utf-8'))
-        for change in ({'text_correct':False}, {'layout_passed':False}, {'disclaimer_reviewed':False}, {'issues':['标题溢出']}, {'sha256':'old'}, {'notes':''}):
+        for change in ({'text_correct':False}, {'layout_passed':False}, {'disclaimer_reviewed':False}, {'disclaimer_style_reviewed':False}, {'issues':['标题溢出']}, {'sha256':'old'}, {'notes':''}):
             record=copy.deepcopy(original)
             record['image_checks'][0].update(change)
             self.write(p,record)

@@ -19,3 +19,17 @@ general使用required=false；uncertain使用true。reason是非空语义理由�
 生图提示词逐张传入判断：required=true时准确加入固定提示语；false时不新增，仍保留必要原有声明。提示语放在安全留白内，约22px/1080px宽，底部边距至少24px，清晰且不遮挡、不溢出，不删正文腾位置。同组字体、颜色和位置规则保持一致，未加提示语的页面不用虚构补充文字。
 
 图片报告cards每项记录disclaimer_decision（与当前content完全一致）和disclaimer：新增时为完整固定文案，不新增时为JSON null。null仅代表未新增，不代表原图已有声明被删除。逐图实际检查判断依据、应加则实际字形/位置、原有必要声明保留；通过后image_checks.disclaimer_reviewed=true，notes写核对依据。不应加却新增、应加缺字、旧判断、漏看成品均需修正后再交付。报告不能代替真实看图。
+
+## 同批提示语的统一样式
+
+一次输出中所有展示固定提示语的图片（包括保留原有同文提示的页）必须用同一字体、字号、字重、颜色、行距、对齐和底部距离。无提示语的页不强制添加。以同一1080px宽基准比较，不用不同画布像素值伪装字号一致；尺寸可统一时优先整组统一画布。
+
+生图前在design.json锁定disclaimer_style，复用于所有页面及纠错提示词。默认22px、常规字重400，选定后不能某页变粗、变细、缩小或换字体；空间不够调整正文、装饰和卡片间距。备用排版独立使用固定22px，不跟随正文自适应字号。
+
+图片报告根字段disclaimer_style和实际展示提示语的cards.disclaimer_style必须完全一致，不展示时可用null。格式如下，字体/颜色/对齐可以按整组设计确定，示例不要求所有作品都同色：
+
+```json
+{"font_family":"Microsoft YaHei","font_size_px_at_1080":22,"font_weight":400,"color":"#143a26","alignment":"center","bottom_margin_px_at_1080":36,"line_height":1.4}
+```
+
+宿主必须查看并排成品，按同一缩放比例比较字形、可见字号、粗细、颜色及位置；记录image_checks.disclaimer_style_reviewed=true，notes写实际比较结果。生图报告里的数值是锁定设计及宿主核对记录，不是脚本从图片像素测量出的字体证明；备用排版报告来自实际共用CSS。记录一致但像素不一致也不能通过。旧任务缺少样式记录时必须实际复核后补齐，不能批量补true。固定文字渲染或定向生图可用于修正，再检查最终文件和哈希。

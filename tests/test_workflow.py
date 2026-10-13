@@ -176,6 +176,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(report["passed"])
         self.assertEqual(len(report["cards"]), 2)
         self.assertTrue(all(c["text_match"] for c in report["cards"]))
+        self.assertEqual(report["cards"][0]["disclaimer_style"],report["cards"][1]["disclaimer_style"])
+        self.assertEqual(report["disclaimer_style"]["font_size_px_at_1080"],22)
         for index in (1, 2):
             markup = (self.root / f"out/{index:02d}.html").read_text(encoding="utf-8")
             self.assertIn("2027届及以后毕业", markup)

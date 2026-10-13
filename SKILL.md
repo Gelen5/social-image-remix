@@ -11,6 +11,8 @@ description: 浏览器解析社交图文链接，支持指定页码及智能去�
 
 - **逐张按最终内容判断提示语**：按 [disclaimer.md](references/disclaimer.md) 在清理/重组后判断。具体企业或岗位的求职推荐、招聘计划及申请条件等必须新增“仅作信息分享 不涉及任何招聘”；通用方法或无招聘语境的企业案例不默认新增；不确定则保守添加并记录原因。原图必要免责声明仍保留。每张cards记录disclaimer_decision（required、classification、reason、evidence），报告绑定该判断和disclaimer（新增文案或null）。生图及备用排版同步判断，逐张实际核对后才能设置disclaimer_reviewed=true。
 
+- **同组提示语样式必须一致**：所有显示固定提示语的成品锁定同一字体、字号、字重、颜色、行距、对齐和底部距离（以1080px宽归一）；默认22px、常规400字重。生图前把disclaimer_style写进design.json，每次生图/纠错都复用，不随单页密度调整小字。交付报告逐页记录同一disclaimer_style，实际并排核对后才标disclaimer_style_reviewed=true；不一致先修正，不用改JSON冒充成品一致。正文太密先调正文和装饰，不能单独缩小提示语。
+
 - **两种模式**：普通二创默认faithful，保持选中原图页数；用户要求“智能重组/自主去冗余、调整页数”时启用smart，读取 [references/smart-reorganization.md](references/smart-reorganization.md)。允许多源页合并、重排和语义改写，但保留所有独有事实与条件。先比较保留结构和重组方案，自主选择合理方案；只要方案时不直接制作。智能模式对下文“一张原图一张成品、不合并重复字段、逐字保留”构成明确例外，范围、事实保真、3:4和质量检查不变。
 
 - 默认交付所选3:4图片、不超过5段、总计200字内配文、580–620字文章正文和3个标题。未指定页码则全部二创。用户明确省略某项时尊重其要求，记录实际范围，不宣称完整交付。

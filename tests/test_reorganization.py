@@ -79,7 +79,7 @@ class ReorganizationTests(unittest.TestCase):
         p=self.root/'text-review.json'
         review=json.loads(p.read_text(encoding='utf-8'))
         review.update(selected_indices=[1,2,3,4,5],reorganization_reviewed=True,image_checks=[dict(file=e['file'],source_indices=e['source_indices'],sha256=e['sha256'],
-            text_correct=True,layout_passed=True,disclaimer_reviewed=True,issues=[],notes='合成测试；不是实际语义质量证明') for e in report['cards']])
+            text_correct=True,layout_passed=True,disclaimer_reviewed=True,disclaimer_style_reviewed=True,issues=[],notes='合成测试；不是实际语义质量证明') for e in report['cards']])
         self.f.write(p,review)
         result=check(self.root/'content.json',self.f.source/'manifest.json',output/'review.json',self.root)
         self.assertEqual(result['output_source_indices'],[[1,2],[3,4],[5]])

@@ -121,6 +121,13 @@ def verbatim(value, tag="span", cls=""):
     return f'<{tag} class="verbatim {cls}">{html.escape(value)}</{tag}>'
 
 
+def disclaimer_style(style):
+    t = TEMPLATES[style['template']]
+    return {'font_family': 'CustomerFont,"Microsoft YaHei","Noto Sans CJK SC","PingFang SC",' + t['font'],
+            'font_size_px_at_1080': 22, 'font_weight': 400, 'color': t['ink'],
+            'alignment': 'right', 'bottom_margin_px_at_1080': 36, 'line_height': 1.4}
+
+
 def card_html(card, style, source_root, font_file=None):
     t = TEMPLATES[style["template"]]
     font_face = ""
@@ -189,7 +196,8 @@ def render(args):
     htmls = [card_html(card, style, source_root, args.font_file) for card in cards]
     # One font size for the entire series, chosen against its densest page.
     report = {"passed": False, "template": style["template"], "source_transcription_reviewed": True,
-              "work_key": style["work_key"], "content_sha256": style["content_sha256"], "cards": []}
+              "work_key": style["work_key"], "content_sha256": style["content_sha256"], "cards": [],
+              "disclaimer_style": disclaimer_style(style)}
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -227,6 +235,7 @@ def render(args):
                                             "sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
                                             "disclaimer": added_note(card),
                                             "disclaimer_decision": decision(card),
+                                            "disclaimer_style": report['disclaimer_style'] if footer_parts(card)[1] else None,
                                             "text_match": True, "overflow": False}
                     if content.get('mode', 'faithful') != 'smart':
                         record.update(source_index=sources[0], source_image=card['source_image'])
