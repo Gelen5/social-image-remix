@@ -1,6 +1,6 @@
 # 完整交付检查
 
-默认交付所选3:4图片、caption.txt（1–5段，总计1–200字符）、article.txt（正文580–620字符）、titles.json（3个不同非空单行标题）。统一非空白Unicode字符计数，标点/数字/英文计入，空白不计入；标题、来源说明与字数说明单独交付不计入正文。
+默认交付所选3:4图片、caption.txt（1–5段，总计1–200字符）、article.txt（正文580–620字符）、caption-titles.json（3个恰好19字标题）及titles.json（3个不同文章标题，最多32字）。正文统一非空白Unicode字符计数，标点/数字/英文计入，空白不计入；标题、来源说明与字数说明单独交付不计入正文。
 
 仅在宿主实际完成语义/视觉复核后设置true，不为通过脚本伪造标记。脚本没有自动事实或广告识别能力。
 
@@ -17,6 +17,12 @@ cards每项必须有disclaimer_decision，与当前content逐张判断完全一�
 ## 文案表达门禁
 
 配文不得重复信息分享/招聘免责声明或官方信息兜底句；文章不得以图片页码、这组图、图中资料等指代组织正文。check_delivery.py拦截已知固定表达及常见页码变体，宿主还需逐段检查同义兜底句和脱离图片的独立可读性；正则不等于全面语义判断。核对说明写notes，改文后重建文字签名与文章排版报告，不复用旧版复核。图片提示语判定与本项分开执行。
+
+## 两套标题与自然表达复核
+
+两组共6条标题，按title-writing.md分别生成。标题采用len(title)，汉字、英文、数字、标点及空格都计入，不使用正文的非空白计数。检查贴图19字、文章最多32字、数量、两组重复、不可见/填充字符；新增caption-titles.json也参与text_signature。titles.json保留旧文件名，专用于文章，不能再混作贴图号标题。
+
+text-review.json增加按caption 1–3、article 1–3排序的title_checks，逐条绑定role、index、实际title和characters，记录facts_supported、natural、appeal、distinct、issues、notes。再记录writing_reviewed、writing_issues、writing_notes，真实检查配文和正文的自然表达、衔接及独立阅读。未解决问题或旧标题复核阻断，脚本不自动判断吸引力、事实或AI率。旧任务需生成第二套标题并实际复核，不复用旧签名。完整清单包含两个标题文件及各组长度。
 
 ## text-review.json
 
@@ -43,3 +49,5 @@ python scripts/check_delivery.py --content "任务目录/content.json" --manifes
 通过时delivery.json列出本次明确文件与字数；失败时passed=false，无可交付清单。仅交付清单文件，不打包整个任务目录。门禁阻断错页、旧PNG、图片哈希变化、过期文字核对、缺标题、超限字数/段数与未完成复核。
 
 用户明确只要图片等局部任务时尊重选择，写partial-delivery.json记录实际文件、省略项与对应检查，不宣称完整门禁通过。文章材料不足可交已完成图片并说明文章待补选，不能伪造完整成功。
+
+交付报告title_count为总计6条，caption_title_count和article_title_count各为3，并分别输出两个标题字数数组。

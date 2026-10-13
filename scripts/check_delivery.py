@@ -12,6 +12,7 @@ from reorganization import card_sources
 from article_layout import check_layout
 from topic_tags import check_topics
 from disclaimer import decision, added_note, footer_parts, check_styles
+from title_quality import validate_titles, check_title_reviews
 
 
 def check_copy_style(caption, article):
@@ -65,16 +66,15 @@ def check(content_path, manifest_path, image_report_path, text_root):
     article = (root/'article.txt').read_text(encoding='utf-8-sig').strip()
     check_copy_style(caption, article)
     titles = read_json(root/'titles.json')
+    caption_titles = read_json(root/'caption-titles.json')
     paragraphs = [p.strip() for p in re.split(r'[\r\n]+', caption) if p.strip()]
     if not 1 <= len(paragraphs) <= 5 or not 1 <= count_text(caption) <= 200:
         raise ValueError('配文必须为1–5个非空段落，总计1–200字符')
     if not 580 <= count_text(article) <= 620:
         raise ValueError('文章正文必须为580–620字符')
-    if (not isinstance(titles, list) or len(titles) != 3
-            or any(not isinstance(t, str) or not t.strip() or '\n' in t or '\r' in t for t in titles)
-            or len({t.strip() for t in titles}) != 3):
-        raise ValueError('需要3个非空、不重复的单行标题')
-    texts = {'caption.txt': caption, 'article.txt': article, 'titles.json': json.dumps(titles, ensure_ascii=False)}
+    title_sets = validate_titles(caption_titles, titles)
+    texts = {'caption.txt': caption, 'article.txt': article, 'titles.json': json.dumps(titles, ensure_ascii=False),
+             'caption-titles.json': json.dumps(caption_titles, ensure_ascii=False)}
     signature = hashlib.sha256(json.dumps(texts, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     review = read_json(root/'text-review.json')
     if (review.get('content_sha256') != digest or review.get('selected_indices') != selected
@@ -83,6 +83,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     for key in ('facts_reviewed', 'scope_reviewed', 'titles_reviewed', 'images_visually_reviewed', 'cleanup_reviewed'):
         if review.get(key) is not True:
             raise ValueError('宿主尚未实际完成复核：' + key)
+    check_title_reviews(review, title_sets)
     checks = review.get('image_checks')
     if not isinstance(checks, list) or len(checks) != len(entries):
         raise ValueError('必须逐张完成文字与排版检查，不能漏检')
@@ -119,7 +120,9 @@ def check(content_path, manifest_path, image_report_path, text_root):
     topics=check_topics(root,content,review)
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
-            'title_count': 3, 'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
+            'title_count': 6, 'caption_title_count': 3, 'article_title_count': 3,
+            'caption_title_characters': [len(t) for t in caption_titles], 'article_title_characters': [len(t) for t in titles],
+            'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
             'article_layout_files': layout_files,
             'topic_tag_files':topics['files'],'topic_tag_count':5,'topic_index_status':topics['data_status'],
@@ -131,6 +134,7 @@ def text_signature(root):
     root = Path(root)
     texts = {n: (root/n).read_text(encoding='utf-8-sig').strip() for n in ('caption.txt','article.txt')}
     texts['titles.json'] = json.dumps(read_json(root/'titles.json'), ensure_ascii=False)
+    texts['caption-titles.json'] = json.dumps(read_json(root/'caption-titles.json'), ensure_ascii=False)
     return hashlib.sha256(json.dumps(texts, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
 

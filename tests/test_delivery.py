@@ -17,6 +17,7 @@ from browser_extract import dom_query, host_matches, CDNS
 from article_layout import render_article
 from topic_tags import select_tags,tag_line
 from disclaimer import check_styles
+from title_quality import validate_titles
 
 
 class DeliveryTests(unittest.TestCase):
@@ -46,6 +47,40 @@ class DeliveryTests(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_two_title_sets_exact_length_and_counting(self):
+        caption=['字'*18+c for c in '甲乙丙']
+        article=['文'*32,'一个自然的文章标题','不同方向的文章标题']
+        self.assertEqual(len(validate_titles(caption,article)['caption']),3)
+        validate_titles(['字'*16+'A1，',caption[1],caption[2]],article)
+        validate_titles(['字'*8+' '+'文'*10,caption[1],caption[2]],article)
+        for value in ('字'*18,'字'*20,'字'*17+'甲\u200b',' '+'字'*18,'字'*17+'  '):
+            with self.subTest(title=value),self.assertRaises(ValueError):
+                validate_titles([value,*caption[1:]],article)
+        for values in (caption[:2],caption+[caption[0]],[caption[0],caption[0],caption[2]]):
+            with self.assertRaises(ValueError):validate_titles(values,article)
+        with self.assertRaises(ValueError):validate_titles(caption,['文'*33,*article[1:]])
+        with self.assertRaises(ValueError):validate_titles(caption,[caption[0],*article[1:]])
+        (self.root/'caption-titles.json').unlink()
+        with self.assertRaises(FileNotFoundError):self.run_check()
+
+    def test_title_and_writing_reviews_bound_to_actual_text(self):
+        path=self.root/'text-review.json'
+        original=json.loads(path.read_text(encoding='utf-8'))
+        for change in ({'natural':False},{'appeal':False},{'facts_supported':False},
+                       {'distinct':False},{'characters':18},{'issues':['凑字数']},{'notes':''},{'title':'旧标题'}):
+            value=copy.deepcopy(original);value['title_checks'][0].update(change)
+            self.write(path,value)
+            with self.assertRaisesRegex(ValueError,'标题'):self.run_check()
+        for change in ({'writing_reviewed':False},{'writing_issues':['段落拼接']},{'writing_notes':''},{'title_checks':[]}):
+            self.write(path,dict(original,**change))
+            with self.assertRaises(ValueError):self.run_check()
+        self.write(path,original)
+        self.write(self.root/'caption-titles.json',['文'*18+'甲','字'*18+'乙','字'*18+'丙'])
+        with self.assertRaisesRegex(ValueError,'版本不一致'):self.run_check()
+        # Even a refreshed signature cannot substitute for reviewing revised titles.
+        self.write(path,dict(original,text_sha256=text_signature(self.root)))
+        with self.assertRaisesRegex(ValueError,'旧标题'):self.run_check()
 
     def test_disclaimer_style_is_locked_across_visible_pages(self):
         report=copy.deepcopy(self.image_report)
@@ -91,7 +126,10 @@ class DeliveryTests(unittest.TestCase):
     def texts(self,length,caption='图中条件供参考。',titles=None):
         (self.root/'article.txt').write_text('文'*length,encoding='utf-8')
         (self.root/'caption.txt').write_text(caption,encoding='utf-8')
-        self.write(self.root/'titles.json',titles if titles is not None else ['标题一','标题二','标题三'])
+        article_titles=titles if titles is not None else ['标题一','标题二','标题三']
+        caption_titles=['字'*18+c for c in '甲乙丙']
+        self.write(self.root/'titles.json',article_titles)
+        self.write(self.root/'caption-titles.json',caption_titles)
         scope=self.content.get('selected_indices',[1])
         candidate={'content_sha256':content_digest(self.content),'relevance_reviewed':True,'candidates':[
             {'keyword':word,'relevance_score':.8,'source_indices':scope,'reason':'合成测试词，仅测试交付门禁'} for word in ['本科','学历','岗位','求职','就业']]}
@@ -101,6 +139,8 @@ class DeliveryTests(unittest.TestCase):
         self.write(self.root/'text-review.json',dict(content_sha256=content_digest(self.content),selected_indices=[1],
             text_sha256=text_signature(self.root),facts_reviewed=True,scope_reviewed=True,titles_reviewed=True,
             images_visually_reviewed=True,cleanup_reviewed=True,topics_reviewed=True,topics_sha256=self.sha(self.root/'topics.json'),notes='合成测试数据，仅验证门禁，不是实际文字质量证明',
+            writing_reviewed=True,writing_issues=[],writing_notes='合成门禁测试，不代表实际自然度验收',
+            title_checks=[dict(role=role,index=i,title=t,characters=len(t),facts_supported=True,natural=True,appeal=True,distinct=True,issues=[],notes='合成标题仅验证门禁，不是吸引力证明') for role,values in [('caption',caption_titles),('article',article_titles)] for i,t in enumerate(values,1)],
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
                                text_correct=True,layout_passed=True,disclaimer_reviewed=True,disclaimer_style_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
         if 580<=length<=620:

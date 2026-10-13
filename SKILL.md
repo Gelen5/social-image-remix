@@ -1,6 +1,6 @@
 ---
 name: social-image-remix
-description: 浏览器解析社交图文链接，支持指定页码及智能去冗余重组，以整组统一风格输出3:4图片，附200字内配文、580至620字文章和3个标题。用于抖音、小红书、快手图文二创与按范围整理内容。
+description: 浏览器解析社交图文链接，支持指定页码及智能去冗余重组，以整组统一风格输出3:4图片，附200字内配文、580至620字独立文章，以及贴图号与文章各3个标题。用于抖音、小红书、快手图文二创与按范围整理内容。
 ---
 
 # 社交图文二创
@@ -15,7 +15,9 @@ description: 浏览器解析社交图文链接，支持指定页码及智能去�
 
 - **两种模式**：普通二创默认faithful，保持选中原图页数；用户要求“智能重组/自主去冗余、调整页数”时启用smart，读取 [references/smart-reorganization.md](references/smart-reorganization.md)。允许多源页合并、重排和语义改写，但保留所有独有事实与条件。先比较保留结构和重组方案，自主选择合理方案；只要方案时不直接制作。智能模式对下文“一张原图一张成品、不合并重复字段、逐字保留”构成明确例外，范围、事实保真、3:4和质量检查不变。
 
-- 默认交付所选3:4图片、不超过5段、总计200字内配文、580–620字文章正文和3个标题。未指定页码则全部二创。用户明确省略某项时尊重其要求，记录实际范围，不宣称完整交付。
+- 默认交付所选3:4图片、不超过5段、总计200字内配文、580–620字文章正文、贴图号与文章各3个标题（共6条）。未指定页码则全部二创。用户明确省略某项时尊重其要求，记录实际范围，不宣称完整交付。
+
+- **标题分场景且自然有吸引力**：读取 [title-writing.md](references/title-writing.md)。贴图号3条，每条恰好19字；文章3条，建议18–30字、最多32字。标题计入汉字、数字、英文、标点及空格；不截断或凑词，两组不能整条复用。基于真实读者困惑、内容范围和具体价值起标题，默认不用冒号拼模板，不虚构紧迫感或录用承诺。逐条实际复核内容支持、自然度、吸引点及差异，记录六条title_checks；任何改字重做复核。配文与文章另按同一指南检查衔接、独立可读及机械拼接，writing_reviewed仅在实际完成后true，writing_issues保留未解决问题。
 
 - **配文与文章分别写**：配文不重复“仅作信息分享、不涉及招聘”或“以企业官方信息为准”等兜底声明，提示语按规则放在图片中。文章是独立内容，读者不看图片也能理解；按主题、行业或岗位组织，不出现第几张图、这组图、图中资料、上图/下图等配图指代。来源与核验状态放sources.md，不通过省略来源边界来制造当前招聘承诺。
 
@@ -103,14 +105,14 @@ python scripts/render_cards.py render --content "任务目录/content.json" --ma
 
 默认另按 [references/topic-tags.md](references/topic-tags.md) 输出5个与最终图片内容匹配的话题标签。先筛相关候选，有实际核验的微信指数证据才参考其热度；指数不是搜索次数。无数据时明确标为“未验证微信指数”，不编热度；用户要求真实指数必需时说明阻碍，不能降级冒充通过。标签单独展示，不占配文200字/5段。topic_tags.py支持截图转录/导出/服务原始返回导入，尚不提供已验证实时自动查询；实际核对后记录topics_reviewed及topics_sha256，再做交付检查。
 
-文章正文核对后按 [references/article-themes/README.md](references/article-themes/README.md) 接入customer-write红黑/橙黑正文排版。默认同文两版，用户指定则一版；仅改变文章HTML，不影响图片或配文。先按语义为重点写article-layout.json，再运行article_layout.py。查看手机预览和强调效果，实际完成后才标article_layout_reviewed，并记录排版报告路径/哈希。三标题仍单独交付，不进正文；排版不得更改正文或带入样文内容。
+文章正文核对后按 [references/article-themes/README.md](references/article-themes/README.md) 接入customer-write红黑/橙黑正文排版。默认同文两版，用户指定则一版；仅改变文章HTML，不影响图片或配文。先按语义为重点写article-layout.json，再运行article_layout.py。查看手机预览和强调效果，实际完成后才标article_layout_reviewed，并记录排版报告路径/哈希。两套标题均单独交付，不进正文；排版不得更改正文或带入样文内容。
 
 进入交付前必须执行 [references/image-quality.md](references/image-quality.md)：逐张打开最终输出图片，对照原图及清理后文案核查文字正确性，再检查排版。错别字、乱码、漏字、错数字、溢出、截断、重叠、遮挡或手机不可读均为阻断项，先修正/重生成，再检查修改后的实际文件。不能仅凭生图成功或脚本返回成功交付。逐图检查写入text-review.json的image_checks，绑定输出文件哈希；原图疑似笔误或陌生缩写不能猜测，明确标出待确认，不宣称没有错误。
 
 默认完成链接图片二创后，读取 [references/wechat-caption.md](references/wechat-caption.md)，按图片语义生成1–5段适合微信贴图号的配文，总计不超过200字，保存为 `caption.txt` 并直接展示可复制正文。用户明确只要图片或不需要配文时才省略。配文贴合本次实际输出的图片，不把未输出页的信息说成已展示；图片未通过核对时暂停配文最终交付。
 
-默认读取 [references/article.md](references/article.md)，只基于所选清理后内容生成580–620字正文，保存article.txt；另生成3个不同的可发布标题，保存titles.json。正文不含标题、来源链接和字数说明。材料不足以支撑文章时提示补选，不能凑字数编造事实或擅自扩大范围。
+默认读取 [references/article.md](references/article.md)，只基于所选清理后内容生成580–620字正文，保存article.txt；另按title-writing.md分别生成贴图号3个19字标题（caption-titles.json）与文章3个最多32字标题（titles.json），不把长标题直接截短。正文不含标题、来源链接和字数说明。材料不足以支撑文章时提示补选，不能凑字数编造事实或擅自扩大范围。
 
 配文与文章严格共用最终选图范围。每项具体事实必须能追溯到所选页；未选页仅供衔接诊断，不能作为正文材料。改变选图范围后重建content并重新生成配文/文章，防止旧内容混入。
 
-完整任务按 [references/delivery.md](references/delivery.md) 准备真实图片报告及text-review.json，运行check_delivery.py；通过后展示图片、配文、文章和3个标题。局部任务记录明确省略项，不伪造完整通过。交付只包含本次文件清单，报告真实检查结果和平台限制。
+完整任务按 [references/delivery.md](references/delivery.md) 准备真实图片报告及text-review.json，运行check_delivery.py；通过后展示图片、配文、文章，单独标明“贴图号标题3条”和“文章标题3条”，同时展示各标题实际字数。局部任务记录明确省略项，不伪造完整通过。交付只包含本次文件清单，报告真实检查结果和平台限制。
