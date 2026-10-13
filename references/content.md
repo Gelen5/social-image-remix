@@ -25,7 +25,8 @@
           ]
         }
       ],
-      "footer": "原图底部完整文案"
+      "footer": "原图底部完整文案",
+      "disclaimer_decision": {"required": true, "classification": "recruitment", "reason": "本张推荐具体企业的岗位方向", "evidence": ["原图企业名称", "岗位方向：完整列表，保留顺序"]}
     }
   ]
 }
@@ -38,3 +39,5 @@ title、subtitle、footer不存在时用空字符串；已确认纯广告字段�
 一个manifest对应一个content；source_image必须按manifest的index顺序一一对应。完整性检查阻断缺图、假文件名、不确定源图总数和未经看图核对的文字。
 
 content锁定后，图文排版不做语义改写。渲染HTML中每个文字节点与该JSON逐项比较，不使用“总体意思相近”作为通过标准。脚本无法判断OCR漏字，所以原图核对必须先完成。
+
+每张最终cards必须包含disclaimer_decision，按 [disclaimer.md](disclaimer.md) 的语义规则判断。清理广告、选页和重组后重新判断，不能直接复用整组结论。

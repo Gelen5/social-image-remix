@@ -40,7 +40,7 @@ reorganization含reviewed（完成真实语义复核才true）、alternatives（
 
 ## 交付
 
-每张重组成品（无论页数）都要有固定脚注“仅作信息分享 不涉及任何招聘”。这是用户要求新增的声明，不参与原图事实去重，不得标为广告/空话清除；仍按image-quality逐张核查其准确性与布局。
+每张重组成品在分组/去重完成后，按最终保留内容重新执行 [disclaimer.md](disclaimer.md) 的语义判断。具体企业/岗位推荐及招聘条件等需添加固定提示语；通用方法页不默认新增。原有必要声明不能去重掉限定条件，判断和实际布局逐张核查。
 
 用原有validate/render/check_delivery脚本。智能图片报告及逐图image_checks使用source_indices数组而非source_index；text-review.json另有reorganization_reviewed=true，notes记录实际覆盖、去重等价性、条件作用域和衔接复核。保留模式兼容旧字段。
 

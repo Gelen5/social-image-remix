@@ -6,8 +6,9 @@ import html
 import json
 from pathlib import Path
 import sys
-from workflow_common import content_digest, work_key, IMAGE_DISCLAIMER
+from workflow_common import content_digest, work_key
 from reorganization import check_reorganization, card_sources
+from disclaimer import decision, added_note, footer_parts
 
 TEMPLATES = {
     "editorial-blue": {"bg": "#f5f9ff", "ink": "#102c50", "accent": "#2375bd", "panel": "#ffffff", "radius": "18px", "border": "1px solid #aed0ef", "font": "sans-serif"},
@@ -27,8 +28,8 @@ def locked_text(card):
         text.append(block["heading"])
         for field in block.get("fields", []):
             text.extend((field["label"], field["text"]))
-    footer = '' if card['footer'].strip() == IMAGE_DISCLAIMER else card['footer']
-    return text + [footer, IMAGE_DISCLAIMER]
+    footer, note = footer_parts(card)
+    return text + [footer, note]
 
 
 def local_asset(root, value):
@@ -70,6 +71,7 @@ def validate(content, manifest, source_root):
     elif len(cards) != len(selected):
         raise ValueError("二创图必须与选定源图一一对应，不能缺图或混入未选图片")
     for position, card in enumerate(cards):
+        decision(card)
         if mode == 'faithful':
             image = images[selected[position] - 1]
             if card.get("source_image") != image.get("file"):
@@ -157,8 +159,8 @@ footer{{flex-shrink:0;font-size:27px;font-weight:800;border-top:2px solid {t['ac
         css += f".panel{{border-left:10px solid {t['accent']}}}h2{{background:transparent;color:{t['ink']};border-bottom:1px dashed {t['accent']};padding:8px 18px}}header{{border-bottom-style:dashed}}"
     elif style["template"] == "warm-magazine":
         css += "header{text-align:center}h1{font-size:74px}h2{border-radius:0 24px 24px 0;width:fit-content;min-width:260px;padding-right:36px}footer{text-align:center}"
-    footer = '' if card['footer'].strip() == IMAGE_DISCLAIMER else card['footer']
-    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>' + css + '</style><body><article class="card"><header>' + verbatim(card['title'], 'h1') + verbatim(card['subtitle'], cls='subtitle') + '</header><main>' + ''.join(panels) + '</main>' + verbatim(footer, 'footer') + verbatim(IMAGE_DISCLAIMER, 'aside', 'disclaimer') + '</article></body></html>'
+    footer, note = footer_parts(card)
+    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>' + css + '</style><body><article class="card"><header>' + verbatim(card['title'], 'h1') + verbatim(card['subtitle'], cls='subtitle') + '</header><main>' + ''.join(panels) + '</main>' + verbatim(footer, 'footer') + verbatim(note, 'aside', 'disclaimer') + '</article></body></html>'
 
 
 OVERFLOW_JS = """() => [...document.querySelectorAll('.card,header,main,.panel,.details,footer,.field,.disclaimer')].filter(e => e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2).map(e => e.className || e.tagName)"""
@@ -223,7 +225,8 @@ def render(args):
                     sources = card_sources(content, manifest)[index-1]
                     record = {"file": png.name, "source_indices": sources, "width": dimensions[0], "height": dimensions[1],
                                             "sha256": hashlib.sha256(png.read_bytes()).hexdigest(),
-                                            "disclaimer": IMAGE_DISCLAIMER,
+                                            "disclaimer": added_note(card),
+                                            "disclaimer_decision": decision(card),
                                             "text_match": True, "overflow": False}
                     if content.get('mode', 'faithful') != 'smart':
                         record.update(source_index=sources[0], source_image=card['source_image'])

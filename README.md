@@ -1,4 +1,4 @@
-# social-image-remix · 社交图文二创 Skill v0.5.0
+# social-image-remix · 社交图文二创 Skill v0.5.1
 
 将抖音/小红书/快手图文链接，通过客户浏览器提取图片，逐张读取完整信息，以**整组统一风格**输出3:4图片，并默认输出配文、文章和3个标题。面向Codex和WorkBuddy等能执行本地Skill的工具。
 
@@ -6,7 +6,7 @@
 
 - 默认生成5个内容匹配话题标签，支持导入核验过的微信指数截图转录、导出结果或服务原始返回；相关性优先，数据缺失明确“未验证微信指数”，不捏造搜索量。标签不占短配文/文章字数。当前无已验证实时指数自动查询，详见 [标签与指数](references/topic-tags.md)。
 
-- 每张二创图强制添加固定小号脚注“仅作信息分享 不涉及任何招聘”，保留底部安全留白，逐张核对准确、可读及无遮挡；固定渲染自动加入，生图需提示和实际复核。
+- 按每张最终图片语义决定提示语：涉及具体企业/岗位的求职推荐、招聘计划或申请条件等时添加“仅作信息分享 不涉及任何招聘”；通用方法、非招聘案例不默认新增，不确定则保守添加。记录理由与内容依据，逐张检查，不以整组或关键词一刀切。详见 [提示语规则](references/disclaimer.md)。
 
 - 600字文章默认生成customer-write的红黑/橙黑两版公众号正文HTML，提供本地切换预览与复制按钮；可指定只用一套。样式与正文分离，标题单独交付，文字、字数、手机横向溢出及版本纳入验收。详见 [文章排版](references/article-themes/README.md)。
 
@@ -48,7 +48,7 @@ OpenCLI扩展的安装和配对见 [OpenCLI官方仓库](https://github.com/jack
 
 **Codex：**把完整仓库目录放到用户Skill目录中的 `social-image-remix` 文件夹，或使用已有技能安装器从该GitHub仓库根目录安装。不要只复制SKILL.md。Windows常用位置为用户目录下 `.agents/skills/social-image-remix`；以客户端实际发现路径为准。重新打开客户端并确认技能出现。
 
-**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.5.0.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
+**WorkBuddy：**执行 `python scripts/package_skill.py --output dist/social-image-remix-v0.5.1.zip`，在技能界面导入ZIP。技能文件导入不会自动安装Python依赖、Chromium或OpenCLI扩展；完成运行环境后再试用。需要调用时告诉助手依赖已安装的Python绝对路径。云端运行没有本机Chrome登录状态时，不可宣称能复用本机浏览器。
 
 安装命令只在客户要求安装时执行；本仓库不改动任何客户的其他Skill。
 
@@ -80,7 +80,7 @@ python scripts/render_cards.py render --content runs/demo/content.json --manifes
 
 ```powershell
 python -m unittest discover -s tests -v
-python scripts/package_skill.py --output dist/social-image-remix-v0.5.0.zip
+python scripts/package_skill.py --output dist/social-image-remix-v0.5.1.zip
 ```
 
 这套测试检查完整性阻断、模板整组一致、历史轮换、文字保真及真实PNG渲染。真实平台验证记录见 [VALIDATION.md](VALIDATION.md)。跨机器Codex/WorkBuddy导入、登录过期、懒加载、大批量处理仍需现场验收。

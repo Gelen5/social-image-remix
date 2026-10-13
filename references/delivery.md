@@ -6,7 +6,7 @@
 
 ## 图片报告
 
-cards每项必须有disclaimer="仅作信息分享 不涉及任何招聘"；每个image_checks须有disclaimer_reviewed=true，实际确认脚注文字完整、清晰、无遮挡后才标记。默认及智能模式均执行；仅修改JSON不能代替真实看图，缺脚注或不合适布局要先修正。
+cards每项必须有disclaimer_decision，与当前content逐张判断完全一致；disclaimer按判断为完整固定文案或null，不能缺字段。每个image_checks须有disclaimer_reviewed=true，实际核对语义判断、应加时文字完整清晰无遮挡、原图必要声明保留后才标记。普通及智能模式均执行，见 [disclaimer.md](disclaimer.md)。仅改JSON不能代替真实看图。
 
 智能mode=smart使用每张source_indices数组（多源页）取代source_index/source_image，对应cards的多源映射；逐图image_checks使用相同source_indices。text-review.json还需reorganization_reviewed=true，记录真实的信息覆盖、去重等价性及条件范围检查。普通模式兼容旧字段，其他长度、哈希和质量门禁不变。
 

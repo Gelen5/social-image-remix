@@ -31,8 +31,50 @@ class WorkflowTests(unittest.TestCase):
                                        {"label": "适合人群", "text": "2027届及以后毕业"}]}],
                                    "footer": "【留学生专属1v1私信沟通】"}]}
 
+        self.content['cards'][0]['disclaimer_decision'] = {'required': True, 'classification': 'recruitment', 'reason': '本张包含实习岗位推荐与毕业届次条件', 'evidence': ['岗位方向：研发、产品、运营', '2027届及以后毕业']}
+
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_mixed_series_decisions_and_original_statement_preserved(self):
+        general = copy.deepcopy(self.content['cards'][0])
+        general.update(source_image='02.png', title='简历项目经历写法', footer='原图必要限定说明')
+        general['disclaimer_decision'] = dict(required=False, classification='general',
+            reason='通用简历方法，无具体企业或岗位推荐', evidence=['简历项目经历写法'])
+        general['blocks'] = [{'heading':'通用方法','fields':[{'label':'建议','text':'按目标、行动、结果描述经历。'}]}]
+        self.content['cards'].append(general)
+        (self.root/'02.png').write_bytes((self.root/'01.png').read_bytes())
+        self.manifest['expected_count'] = 2
+        self.manifest['images'].append(dict(self.manifest['images'][0], index=2, file='02.png'))
+        for filename, value in [('content.json',self.content),('manifest.json',self.manifest)]:
+            (self.root/filename).write_text(json.dumps(value,ensure_ascii=False),encoding='utf-8')
+        args = argparse.Namespace(content=self.root/'content.json',manifest=self.root/'manifest.json',
+            output=self.root/'mixed',history=self.root/'history.json',template=None,font_file=None)
+        self.assertEqual(render(args),0)
+        report=json.loads((args.output/'review.json').read_text(encoding='utf-8'))
+        self.assertEqual(report['cards'][0]['disclaimer'],IMAGE_DISCLAIMER)
+        self.assertIsNone(report['cards'][1]['disclaimer'])
+        markup=(args.output/'02.html').read_text(encoding='utf-8')
+        self.assertNotIn(IMAGE_DISCLAIMER,markup)
+        self.assertIn('原图必要限定说明',markup)
+        # Not adding a new disclaimer must never remove the original exact one.
+        general['footer']=IMAGE_DISCLAIMER
+        markup=card_html(general,{'template':'editorial-blue'},self.root)
+        self.assertEqual(markup.count(IMAGE_DISCLAIMER),1)
+
+    def test_missing_or_contradictory_semantic_decision_blocks(self):
+        original=copy.deepcopy(self.content)
+        for change in (None, {}, dict(required=False,classification='uncertain',reason='语境待确认',evidence=['实习']),
+                       dict(required=True,classification='recruitment',reason='',evidence=['岗位']),
+                       dict(required=False,classification='general',reason='通用方法',evidence=[])):
+            self.content=copy.deepcopy(original)
+            self.content['cards'][0]['disclaimer_decision']=change
+            with self.subTest(change=change),self.assertRaisesRegex(ValueError,'脚注'):
+                validate(self.content,self.manifest,self.root)
+        self.content=original
+        self.content['cards'][0]['disclaimer_decision']=dict(required=True,classification='uncertain',
+            reason='可能是实习岗位推荐，语境待确认，保守添加',evidence=['留学生实习'])
+        self.assertEqual(len(validate(self.content,self.manifest,self.root)),1)
 
     def test_selected_pages_exclude_unselected_and_reject_bad_scope(self):
         original = copy.deepcopy(self.content["cards"][0])

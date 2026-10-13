@@ -7,10 +7,11 @@ from pathlib import Path
 import sys
 from PIL import Image
 from render_cards import read_json, validate, local_asset
-from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIMER
+from workflow_common import content_digest, count_text, work_key
 from reorganization import card_sources
 from article_layout import check_layout
 from topic_tags import check_topics
+from disclaimer import decision, added_note
 
 
 def check(content_path, manifest_path, image_report_path, text_root):
@@ -32,8 +33,10 @@ def check(content_path, manifest_path, image_report_path, text_root):
         raise ValueError('输出图片范围与selected_indices不一致')
     actual_files = []
     for entry, card in zip(entries, content['cards']):
-        if entry.get('disclaimer') != IMAGE_DISCLAIMER:
-            raise ValueError('每张二创图必须有准确的固定信息分享脚注')
+        if entry.get('disclaimer_decision') != decision(card):
+            raise ValueError('图片脚注判断记录缺失或与当前内容不一致')
+        if 'disclaimer' not in entry or entry['disclaimer'] != added_note(card):
+            raise ValueError('新增脚注与本张语义判断不一致或固定文案有误')
         if not smart and entry.get('source_image') != card['source_image']:
             raise ValueError('图片原图对应不一致')
         path = local_asset(report_path.parent, entry['file'])
@@ -81,7 +84,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
                 or inspection.get('issues') != []):
             raise ValueError('图片文字或排版未通过，需修正后重新检查')
         if inspection.get('disclaimer_reviewed') is not True:
-            raise ValueError('需逐张确认固定脚注准确、清晰且不遮挡正文')
+            raise ValueError('需逐张确认脚注语义判断正确，应加则准确清晰无遮挡，并保留原图必要声明')
         if not isinstance(inspection.get('notes'), str) or not inspection['notes'].strip():
             raise ValueError('逐图检查需有实际核对说明')
     if not isinstance(review.get('notes'), str) or not review['notes'].strip():

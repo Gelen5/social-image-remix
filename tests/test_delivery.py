@@ -29,13 +29,14 @@ class DeliveryTests(unittest.TestCase):
         Image.new('RGB',(600,800)).save(self.out/'01.png')
         self.content = {'source_url':'https://v.m.chenzhongtech.com/fw/photo/abc?token=1',
                         'transcription_reviewed':True,'selected_indices':[1],
-                        'cards':[{'source_image':'01.png','title':'测试','subtitle':'','footer':'',
+                        'cards':[{'source_image':'01.png','title':'招聘学历条件测试','subtitle':'','footer':'',
                                   'blocks':[{'heading':'条件','fields':[{'label':'学历','text':'本科'}]}]}]}
+        self.content['cards'][0]['disclaimer_decision'] = {'required': True, 'classification': 'recruitment', 'reason': '本张说明招聘学历条件', 'evidence': ['招聘学历条件测试', '学历：本科']}
         self.manifest = {'complete':True,'expected_count':1,'errors':[], 'source_url':self.content['source_url'],
                          'images':[{'index':1,'file':'01.png','sha256':self.sha(self.source/'01.png')}]}
         self.image_report = {'passed':True,'template':'test-design','work_key':work_key(self.content['source_url']),
                              'content_sha256':content_digest(self.content),'cards':[{'source_index':1,'source_image':'01.png',
-                             'file':'01.png','sha256':self.sha(self.out/'01.png'),'disclaimer':IMAGE_DISCLAIMER}]}
+                             'file':'01.png','sha256':self.sha(self.out/'01.png'),'disclaimer':IMAGE_DISCLAIMER,'disclaimer_decision':self.content['cards'][0]['disclaimer_decision']}]}
         self.write(self.root/'content.json',self.content)
         self.write(self.source/'manifest.json',self.manifest)
         self.write(self.out/'review.json',self.image_report)
@@ -111,6 +112,21 @@ class DeliveryTests(unittest.TestCase):
             report['cards'][0]['disclaimer']=value
             self.write(self.out/'review.json',report)
             with self.assertRaisesRegex(ValueError,'脚注'): self.run_check()
+
+    def test_general_decision_allows_no_new_note_but_requires_current_judgment(self):
+        value=dict(required=False,classification='general',reason='通用学历说明，无招聘推荐',evidence=['学历：本科'])
+        self.content['cards'][0]['disclaimer_decision']=value
+        self.write(self.root/'content.json',self.content)
+        self.image_report['content_sha256']=content_digest(self.content)
+        self.image_report['cards'][0].update(disclaimer=None,disclaimer_decision=value)
+        self.write(self.out/'review.json',self.image_report)
+        self.texts(600)
+        self.assertTrue(self.run_check()['passed'])
+        for change in ({'disclaimer':IMAGE_DISCLAIMER},{'disclaimer_decision':None}):
+            report=copy.deepcopy(self.image_report)
+            report['cards'][0].update(change)
+            self.write(self.out/'review.json',report)
+            with self.assertRaisesRegex(ValueError,'脚注'):self.run_check()
 
     def test_caption_semantic_paragraph_count(self):
         for count in (1, 2, 5):
