@@ -4,6 +4,10 @@
 
 仅在宿主实际完成语义/视觉复核后设置true，不为通过脚本伪造标记。脚本没有自动事实或广告识别能力。
 
+## 文章封面
+
+完整交付增加article-cover/cover.png和cover-report.json，比例严格2.35:1、主题总结4汉字；图组仍为3:4，不把封面算成源图二创页。报告字段与text-review.json的article_cover_report、article_cover_report_sha256、article_cover_reviewed、cover_check按article-cover.md填写。检查绑定正文、图片和报告版本，实际看图确认四字与主题及排版后才能通过；缺封面或复核阻断。局部文章/封面任务用article_cover.py单独验收并记录partial-delivery，不冒充完整交付。
+
 ## 图片报告
 
 cards每项必须有disclaimer_decision，与当前content逐张判断完全一致；disclaimer按判断为完整固定文案或null，不能缺字段。每个image_checks须有disclaimer_reviewed=true，实际核对语义判断、应加时文字完整清晰无遮挡、原图必要声明保留后才标记。普通及智能模式均执行，见 [disclaimer.md](disclaimer.md)。仅改JSON不能代替真实看图。

@@ -13,6 +13,7 @@ from article_layout import check_layout
 from topic_tags import check_topics
 from disclaimer import decision, added_note, footer_parts, check_styles
 from title_quality import validate_titles, check_title_reviews
+from article_cover import check_cover
 
 
 def check_copy_style(caption, article):
@@ -118,6 +119,10 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if {entry['theme'] for entry in layout['files']}!=required:
         raise ValueError('文章排版主题与用户选择不一致')
     topics=check_topics(root,content,review)
+    cover_relative=review.get('article_cover_report','article-cover/cover-report.json')
+    if not isinstance(cover_relative,str):raise ValueError('封面报告路径不合法')
+    cover_report=local_asset(root,cover_relative)
+    cover=check_cover(article,cover_report,review)
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
             'title_count': 6, 'caption_title_count': 3, 'article_title_count': 3,
@@ -125,6 +130,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
             'mode': content.get('mode', 'faithful'), 'output_source_indices': mappings, 'images': [str(p) for p in actual_files],
             'text_files': [str(root/n) for n in texts],
             'article_layout_files': layout_files,
+            'article_cover_files':cover['files'],'article_cover_keyword':cover['keyword'],'article_cover_ratio':cover['ratio'],
             'topic_tag_files':topics['files'],'topic_tag_count':5,'topic_index_status':topics['data_status'],
             'topic_index_notice':topics['notice'],
             'semantic_verification': 'host_review_attestation_not_automatic_detection'}

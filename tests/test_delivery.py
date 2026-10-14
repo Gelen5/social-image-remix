@@ -14,7 +14,7 @@ from workflow_common import content_digest, count_text, work_key, IMAGE_DISCLAIM
 from style_registry import reserve
 from render_cards import choose_style, render
 from browser_extract import dom_query, host_matches, CDNS
-from article_layout import render_article
+from article_layout import render_article, body_hash
 from topic_tags import select_tags,tag_line
 from disclaimer import check_styles
 from title_quality import validate_titles
@@ -47,6 +47,18 @@ class DeliveryTests(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    def test_article_cover_required_in_full_delivery(self):
+        result=self.run_check()
+        self.assertEqual(result['article_cover_ratio'],'2.35:1')
+        self.assertEqual(len(result['article_cover_files']),2)
+        path=self.root/'text-review.json'
+        original=json.loads(path.read_text(encoding='utf-8'))
+        self.write(path,dict(original,article_cover_reviewed=False))
+        with self.assertRaisesRegex(ValueError,'封面'):self.run_check()
+        self.write(path,original)
+        (self.root/'article-cover/cover.png').unlink()
+        with self.assertRaisesRegex(ValueError,'封面'):self.run_check()
 
     def test_two_title_sets_exact_length_and_counting(self):
         caption=['字'*18+c for c in '甲乙丙']
@@ -149,6 +161,13 @@ class DeliveryTests(unittest.TestCase):
             review=json.loads((self.root/'text-review.json').read_text(encoding='utf-8'))
             review.update(article_layout_reviewed=True,article_layout_report=str((output/'article-layout-report.json').relative_to(self.root)),
                           article_layout_report_sha256=self.sha(output/'article-layout-report.json'))
+            cover=self.root/'article-cover';cover.mkdir(exist_ok=True)
+            Image.new('RGB',(470,200)).save(cover/'cover.png')
+            article=(self.root/'article.txt').read_text(encoding='utf-8')
+            record=dict(passed=True,article_sha256=body_hash(article),keyword='合成测试',file='cover.png',sha256=self.sha(cover/'cover.png'),width=470,height=200,ratio='2.35:1')
+            self.write(cover/'cover-report.json',record)
+            review.update(article_cover_reviewed=True,article_cover_report='article-cover/cover-report.json',article_cover_report_sha256=self.sha(cover/'cover-report.json'),
+                cover_check=dict(sha256=record['sha256'],keyword='合成测试',article_sha256=record['article_sha256'],text_correct=True,layout_passed=True,theme_matched=True,issues=[],notes='合成空白图，只验证封面门禁，不是实际四字视觉证明'))
             self.write(self.root/'text-review.json',review)
 
     def run_check(self):
