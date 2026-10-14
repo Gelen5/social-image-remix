@@ -1,6 +1,6 @@
 # 微信贴图号配文
 
-共用selection.json与content.selected_indices的最终选图范围。二创验收后默认输出总计200字以内、最多5段的配文，保存caption.txt；默认另有580–620字文章，以及贴图号/文章各3个标题，用户明确省略时尊重选择。
+共用selection.json与content.selected_indices的最终选图范围。二创验收后默认输出总计200字以内、最多5段的配文，保存caption.txt；默认另有不超过500字文章，以及贴图号/文章各3个标题，用户明确省略时尊重选择。
 
 ## 语义与阅读
 

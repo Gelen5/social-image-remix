@@ -75,7 +75,7 @@ class ReorganizationTests(unittest.TestCase):
         self.assertEqual(len(list(output.glob('*.png'))),3)
         self.f.content=self.content
         self.f.out=output
-        self.f.texts(600)
+        self.f.texts(450)
         p=self.root/'text-review.json'
         review=json.loads(p.read_text(encoding='utf-8'))
         review.update(selected_indices=[1,2,3,4,5],reorganization_reviewed=True,image_checks=[dict(file=e['file'],source_indices=e['source_indices'],sha256=e['sha256'],

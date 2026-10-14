@@ -61,8 +61,8 @@ def validate_fragment(markup, article, theme):
     parser=FragmentParser(THEMES[theme]); parser.feed(markup); parser.close()
     if parser.stack or canonical(''.join(parser.text))!=canonical(article):
         raise ValueError('排版文字与正文不一致，不能加标题、漏字或改字')
-    if not 580<=count_text(''.join(parser.text))<=620:
-        raise ValueError('排版正文不在580–620字内')
+    if not 1<=count_text(''.join(parser.text))<=500:
+        raise ValueError('排版正文必须非空且不超过500字')
 
 
 def fragment(article, theme, layout=None):
@@ -138,7 +138,7 @@ def render_article(article_path, output, themes='both', layout_path=None, mobile
     output=Path(output).resolve(); output.mkdir(parents=True,exist_ok=True)
     (output/'article-layout-report.json').write_text(json.dumps({'passed':False}),encoding='utf-8')
     article=Path(article_path).read_text(encoding='utf-8-sig').strip()
-    if not 580<=count_text(article)<=620: raise ValueError('先完成580–620字正文，再排版')
+    if not 1<=count_text(article)<=500: raise ValueError('先完成非空且不超过500字的正文，再排版')
     layout=json.loads(Path(layout_path).read_text(encoding='utf-8-sig')) if layout_path else {}
     if not isinstance(layout,dict): raise ValueError('layout需为JSON对象')
     selected=list(THEMES) if themes=='both' else [themes]

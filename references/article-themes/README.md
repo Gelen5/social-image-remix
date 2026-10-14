@@ -1,6 +1,6 @@
 # 红黑 / 橙黑文章排版
 
-来源：[Gelen5/customer-write](https://github.com/Gelen5/customer-write/tree/main/references/templates)，固定版本660a613c72c22eb269fd47f8e8e6056eebb15052。upstream保留两套样文正文、规范说明、MIT许可证及provenance.json，仅用于样式参考。绝不能复制样文中的个人经历、成绩、导语或结论到客户文章；引用规范不覆盖本Skill的600字、来源、清理及交付规则。
+来源：[Gelen5/customer-write](https://github.com/Gelen5/customer-write/tree/main/references/templates)，固定版本660a613c72c22eb269fd47f8e8e6056eebb15052。upstream保留两套样文正文、规范说明、MIT许可证及provenance.json，仅用于样式参考。绝不能复制样文中的个人经历、成绩、导语或结论到客户文章；引用规范不覆盖本Skill的500字上限、来源、清理及交付规则。
 
 主题名是red-black（红黑）和orange-black（橙黑），不是橙红。正文黑色#000000、16px、行高2.0，彩色强调分别#C00000与#E67E17，不在同篇混用。普通段落左右内缩0、段距18px；已存在的注释段可降级为14px灰字、灰竖条及12px左内缩，不新增注释内容。
 
@@ -8,7 +8,7 @@
 
 ## 实现
 
-正文确认580–620字后，宿主根据语义为重点规划article-layout.json，emphasis记录1起算段号、0起算字符区间[start,end)以及tone（accent或black）。段落按article.txt空行分隔，区间必须准确引用原文，不能通过查找替换改字；同段区间不能重叠，单块≤15字符，彩色最多4处，总加粗≤15%。按实际内容选择重点，不机械每句加粗或为达到比例硬凑。notes可列已有注释段号，默认空数组。
+正文确认不超过500字后，宿主根据语义为重点规划article-layout.json，emphasis记录1起算段号、0起算字符区间[start,end)以及tone（accent或black）。段落按article.txt空行分隔，区间必须准确引用原文，不能通过查找替换改字；同段区间不能重叠，单块≤15字符，彩色最多4处，总加粗≤15%。按实际内容选择重点，不机械每句加粗或为达到比例硬凑。notes可列已有注释段号，默认空数组。
 
 ```json
 {"emphasis":[{"paragraph":1,"start":0,"end":8,"tone":"accent"}],"notes":[]}

@@ -70,8 +70,8 @@ def check(content_path, manifest_path, image_report_path, text_root):
     paragraphs = [p.strip() for p in re.split(r'[\r\n]+', caption) if p.strip()]
     if not 1 <= len(paragraphs) <= 5 or not 1 <= count_text(caption) <= 200:
         raise ValueError('配文必须为1–5个非空段落，总计1–200字符')
-    if not 580 <= count_text(article) <= 620:
-        raise ValueError('文章正文必须为580–620字符')
+    if not 1 <= count_text(article) <= 500:
+        raise ValueError('文章正文必须非空且不超过500字符')
     title_sets = validate_titles(caption_titles, titles)
     texts = {'caption.txt': caption, 'article.txt': article, 'titles.json': json.dumps(titles, ensure_ascii=False),
              'caption-titles.json': json.dumps(caption_titles, ensure_ascii=False)}

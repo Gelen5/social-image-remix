@@ -43,7 +43,7 @@ class DeliveryTests(unittest.TestCase):
         self.write(self.root/'content.json',self.content)
         self.write(self.source/'manifest.json',self.manifest)
         self.write(self.out/'review.json',self.image_report)
-        self.texts(600)
+        self.texts(450)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -111,10 +111,10 @@ class DeliveryTests(unittest.TestCase):
                 check_copy_style('留学生实习方向清单。',value)
         check_copy_style('2027届实习方向，涵盖技术、市场和供应链。',
                          '图像算法属于技术方向，第二季度安排需按实际材料确认。')
-        self.texts(600,caption='仅作信息分享。')
+        self.texts(450,caption='仅作信息分享。')
         with self.assertRaisesRegex(ValueError,'配文'):self.run_check()
-        self.texts(600)
-        (self.root/'article.txt').write_text('第一张图'+'文'*596,encoding='utf-8')
+        self.texts(450)
+        (self.root/'article.txt').write_text('第一张图'+'文'*446,encoding='utf-8')
         with self.assertRaisesRegex(ValueError,'独立阅读'):self.run_check()
 
     def sha(self,p):
@@ -143,7 +143,7 @@ class DeliveryTests(unittest.TestCase):
             title_checks=[dict(role=role,index=i,title=t,characters=len(t),facts_supported=True,natural=True,appeal=True,distinct=True,issues=[],notes='合成标题仅验证门禁，不是吸引力证明') for role,values in [('caption',caption_titles),('article',article_titles)] for i,t in enumerate(values,1)],
             image_checks=[dict(file='01.png',source_index=1,sha256=self.sha(self.out/'01.png'),
                                text_correct=True,layout_passed=True,disclaimer_reviewed=True,disclaimer_style_reviewed=True,issues=[],notes='合成测试图，仅检查门禁，不是实际脚注视觉证明')]))
-        if 580<=length<=620:
+        if 1<=length<=500:
             output=self.root/f'layout-{len(list(self.root.glob("layout-*")))}'
             render_article(self.root/'article.txt',output,mobile=False)
             review=json.loads((self.root/'text-review.json').read_text(encoding='utf-8'))
@@ -155,17 +155,17 @@ class DeliveryTests(unittest.TestCase):
         return check(self.root/'content.json',self.source/'manifest.json',self.out/'review.json',self.root)
 
     def test_length_boundaries_titles_and_caption(self):
-        for n in (580,600,620):
+        for n in (1,450,500):
             self.texts(n)
             self.assertEqual(self.run_check()['article_characters'],n)
-        for n in (579,621):
+        for n in (0,501):
             self.texts(n)
             with self.assertRaises(ValueError): self.run_check()
         for caption in ('', '字'*201, '\n\n'.join(['一段']*6)):
-            self.texts(600,caption)
+            self.texts(450,caption)
             with self.assertRaises(ValueError): self.run_check()
         for titles in (['一','二'], ['一','二','三','四'], ['一','一','三'], ['一','','三']):
-            self.texts(600,titles=titles)
+            self.texts(450,titles=titles)
             with self.assertRaises(ValueError): self.run_check()
         self.assertEqual(count_text(' 中 文\n2027， '),7)
 
@@ -197,7 +197,7 @@ class DeliveryTests(unittest.TestCase):
         self.image_report['content_sha256']=content_digest(self.content)
         self.image_report['cards'][0].update(disclaimer=None,disclaimer_decision=value)
         self.write(self.out/'review.json',self.image_report)
-        self.texts(600)
+        self.texts(450)
         self.assertTrue(self.run_check()['passed'])
         for change in ({'disclaimer':IMAGE_DISCLAIMER},{'disclaimer_decision':None}):
             report=copy.deepcopy(self.image_report)
@@ -207,9 +207,9 @@ class DeliveryTests(unittest.TestCase):
 
     def test_caption_semantic_paragraph_count(self):
         for count in (1, 2, 5):
-            self.texts(600,caption='\n\n'.join(['本段仅为结构测试。']*count))
+            self.texts(450,caption='\n\n'.join(['本段仅为结构测试。']*count))
             self.assertEqual(self.run_check()['caption_paragraphs'],count)
-        self.texts(600,caption='第一段。\r\n\r\n第二段。')
+        self.texts(450,caption='第一段。\r\n\r\n第二段。')
         self.assertEqual(self.run_check()['caption_paragraphs'],2)
 
     def test_article_layout_review_and_requested_theme_block(self):
@@ -229,9 +229,9 @@ class DeliveryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'主题'): self.run_check()
 
     def test_stale_texts_scope_and_extra_files_block(self):
-        (self.root/'article.txt').write_text('新'*600,encoding='utf-8')
+        (self.root/'article.txt').write_text('新'*450,encoding='utf-8')
         with self.assertRaisesRegex(ValueError,'版本'): self.run_check()
-        self.texts(600)
+        self.texts(450)
         report = copy.deepcopy(self.image_report)
         report['cards'][0]['source_index']=2
         self.write(self.out/'review.json',report)

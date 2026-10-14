@@ -10,13 +10,27 @@ from article_layout import fragment, validate_fragment, render_article, check_la
 class ArticleLayoutTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
-        self.article='关键条件要核对。'+'资料'*145+'\n\n'+'保留全部信息。'+'正文'*146
-        self.article+='文'*(600-sum(not c.isspace() for c in self.article))
+        self.article='关键条件要核对。'+'资料'*105+'\n\n'+'保留全部信息。'+'正文'*106
+        self.article+='文'*(450-sum(not c.isspace() for c in self.article))
         (self.root/'article.txt').write_text(self.article,encoding='utf-8')
         self.plan={'emphasis':[{'paragraph':1,'start':0,'end':7,'tone':'accent'}, {'paragraph':2,'start':0,'end':6,'tone':'black'}]}
         (self.root/'plan.json').write_text(json.dumps(self.plan),encoding='utf-8')
 
     def tearDown(self): self.tmp.cleanup()
+
+    def test_article_max_500_in_render_and_fragment_validation(self):
+        for size in (1,450,500):
+            article='文'*size
+            (self.root/'article.txt').write_text(article,encoding='utf-8')
+            report=render_article(self.root/'article.txt',self.root/f'length-{size}',mobile=False)
+            self.assertEqual(report['characters'],size)
+            validate_fragment(fragment(article,'red-black'),article,'red-black')
+        for article in ('','文'*501):
+            (self.root/'article.txt').write_text(article,encoding='utf-8')
+            with self.assertRaisesRegex(ValueError,'500'):
+                render_article(self.root/'article.txt',self.root/f'bad-{len(article)}',mobile=False)
+            with self.assertRaisesRegex(ValueError,'500'):
+                validate_fragment(fragment(article,'red-black'),article,'red-black')
 
     def test_both_themes_mobile_preview_and_copy_payload(self):
         out=self.root/'layout'
@@ -43,7 +57,7 @@ class ArticleLayoutTests(unittest.TestCase):
 
     def test_markup_escape_missing_text_and_color_pollution(self):
         dangerous='<script>alert(1)</script>&'
-        article=dangerous+'文'*(600-len(dangerous))
+        article=dangerous+'文'*(450-len(dangerous))
         markup=fragment(article,'red-black')
         self.assertIn('&lt;script&gt;',markup)
         validate_fragment(markup,article,'red-black')
