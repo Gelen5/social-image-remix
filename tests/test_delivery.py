@@ -164,10 +164,10 @@ class DeliveryTests(unittest.TestCase):
             cover=self.root/'article-cover';cover.mkdir(exist_ok=True)
             Image.new('RGB',(470,200)).save(cover/'cover.png')
             article=(self.root/'article.txt').read_text(encoding='utf-8')
-            record=dict(passed=True,article_sha256=body_hash(article),keyword='合成测试',file='cover.png',sha256=self.sha(cover/'cover.png'),width=470,height=200,ratio='2.35:1')
+            record=dict(passed=True,article_sha256=body_hash(article),keyword='合成测试',file='cover.png',sha256=self.sha(cover/'cover.png'),width=470,height=200,ratio='2.35:1',core_summary='合成正文仅供门禁测试',keyword_reason='合成候选用于记录核验测试',keyword_candidates=[dict(keyword='合成测试',reason='合成最终词'),dict(keyword='规则测试',reason='合成备选词')])
             self.write(cover/'cover-report.json',record)
             review.update(article_cover_reviewed=True,article_cover_report='article-cover/cover-report.json',article_cover_report_sha256=self.sha(cover/'cover-report.json'),
-                cover_check=dict(sha256=record['sha256'],keyword='合成测试',article_sha256=record['article_sha256'],text_correct=True,layout_passed=True,theme_matched=True,issues=[],notes='合成空白图，只验证封面门禁，不是实际四字视觉证明'))
+                cover_check=dict(sha256=record['sha256'],keyword='合成测试',article_sha256=record['article_sha256'],text_correct=True,layout_passed=True,theme_matched=True,keyword_summary_reviewed=True,issues=[],notes='合成空白图，只验证封面门禁，不是实际四字视觉证明'))
             self.write(self.root/'text-review.json',review)
 
     def run_check(self):

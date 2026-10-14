@@ -1,10 +1,12 @@
 """Verify a real 2.35:1 article cover and its four-character host-reviewed keyword."""
 import argparse
+from datetime import date
 import hashlib
 import json
 from pathlib import Path
 import re
 import sys
+from urllib.parse import urlparse
 from PIL import Image
 from article_layout import body_hash
 from workflow_common import count_text
@@ -20,6 +22,36 @@ def check_cover(article, report_path, review):
     keyword = report.get('keyword')
     if not isinstance(keyword, str) or not re.fullmatch(r'[\u3400-\u4dbf\u4e00-\u9fff]{4}', keyword):
         raise ValueError('封面总结必须恰好4个汉字，不含空格标点英文数字')
+    for key in ('core_summary','keyword_reason'):
+        if not isinstance(report.get(key),str) or not report[key].strip():
+            raise ValueError('需记录全文核心概括及四字提炼理由')
+    candidates=report.get('keyword_candidates')
+    if not isinstance(candidates,list) or len(candidates)<2:
+        raise ValueError('四字提炼需比较至少两个不同候选')
+    words=[]
+    for candidate in candidates:
+        if (not isinstance(candidate,dict) or not isinstance(candidate.get('keyword'),str)
+                or not re.fullmatch(r'[\u3400-\u4dbf\u4e00-\u9fff]{4}',candidate['keyword'])
+                or not isinstance(candidate.get('reason'),str) or not candidate['reason'].strip()):
+            raise ValueError('四字候选需有准确四汉字及具体比较理由')
+        words.append(candidate['keyword'])
+    if len(set(words)) != len(words) or keyword not in words:
+        raise ValueError('四字候选不能重复，最终总结必须来自已比较候选')
+    freshness = keyword.startswith(('刚刚','最新','今日','今天','本周','本月'))
+    if freshness:
+        evidence=report.get('publication_evidence')
+        if not isinstance(evidence,dict):
+            raise ValueError('时效封面词需有真实发布来源和日期证据')
+        url=evidence.get('source_url')
+        if not isinstance(url,str) or urlparse(url).scheme not in ('http','https') or not urlparse(url).hostname:
+            raise ValueError('时效封面词缺少可追溯发布来源')
+        try:
+            published=date.fromisoformat(evidence['published_on'])
+            checked=date.fromisoformat(evidence['checked_on'])
+        except (KeyError,TypeError,ValueError):
+            raise ValueError('时效封面词需记录真实发布日期与核对日期')
+        if published>checked or not isinstance(evidence.get('notes'),str) or not evidence['notes'].strip():
+            raise ValueError('时效证据日期矛盾或缺少核对依据')
     filename = report.get('file')
     if not isinstance(filename, str) or not filename:
         raise ValueError('封面报告缺少实际图片文件')
@@ -43,10 +75,12 @@ def check_cover(article, report_path, review):
     if (not isinstance(inspection,dict) or inspection.get('sha256') != digest
             or inspection.get('keyword') != keyword or inspection.get('article_sha256') != body_hash(article)):
         raise ValueError('封面复核对应旧图片、旧主题词或旧文章')
-    if (any(inspection.get(key) is not True for key in ('text_correct','layout_passed','theme_matched'))
+    if (any(inspection.get(key) is not True for key in ('text_correct','layout_passed','theme_matched','keyword_summary_reviewed'))
             or inspection.get('issues') != [] or not isinstance(inspection.get('notes'),str)
             or not inspection['notes'].strip()):
         raise ValueError('封面四字文字、排版或文章主题匹配尚未通过')
+    if freshness and inspection.get('freshness_reviewed') is not True:
+        raise ValueError('需实际核对刚刚/最新等封面词的时效依据')
     return {'passed':True,'keyword':keyword,'width':width,'height':height,'ratio':'2.35:1',
             'files':[str(image),str(path)],'verification':'host_visual_review_not_automatic_ocr'}
 

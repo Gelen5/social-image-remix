@@ -6,7 +6,7 @@
 
 ## 文章封面
 
-完整交付增加article-cover/cover.png和cover-report.json，比例严格2.35:1、主题总结4汉字；图组仍为3:4，不把封面算成源图二创页。报告字段与text-review.json的article_cover_report、article_cover_report_sha256、article_cover_reviewed、cover_check按article-cover.md填写。检查绑定正文、图片和报告版本，实际看图确认四字与主题及排版后才能通过；缺封面或复核阻断。局部文章/封面任务用article_cover.py单独验收并记录partial-delivery，不冒充完整交付。
+完整交付增加article-cover/cover.png和cover-report.json，比例严格2.35:1、主题总结4汉字；图组仍为3:4，不把封面算成源图二创页。报告字段与text-review.json的article_cover_report、article_cover_report_sha256、article_cover_reviewed、cover_check按article-cover.md填写。检查绑定正文、图片和报告版本，实际看图确认四字与主题及排版后才能通过；缺封面或复核阻断。新增core_summary、keyword_reason和至少2项keyword_candidates，逐候选理由与最终四字绑定当前文章；cover_check.keyword_summary_reviewed需实际核对全文核心覆盖。使用刚刚/最新等词时另记录publication_evidence并实际核对freshness_reviewed，不把解析时间当发布日期。局部文章/封面任务用article_cover.py单独验收并记录partial-delivery，不冒充完整交付。
 
 ## 图片报告
 
