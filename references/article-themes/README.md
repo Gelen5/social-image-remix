@@ -8,7 +8,7 @@
 
 ## 实现
 
-正文确认不超过500字后，宿主根据语义为重点规划article-layout.json，emphasis记录1起算段号、0起算字符区间[start,end)以及tone（accent或black）。段落按article.txt空行分隔，区间必须准确引用原文，不能通过查找替换改字；同段区间不能重叠，单块≤15字符，彩色最多4处，总加粗≤15%。按实际内容选择重点，不机械每句加粗或为达到比例硬凑。notes可列已有注释段号，默认空数组。
+正文确认不超过500字后，宿主根据语义为重点规划article-layout.json，emphasis记录1起算段号、0起算字符区间[start,end)以及tone（accent或black）。红黑版与橙黑版均须同时包含accent彩色加粗和black黑色加粗：accent在红黑版对应#C00000、橙黑版对应#E67E17，black固定为#000000。两类重点分别用于不同信息，不把文章做成只有一种粗体颜色。段落按article.txt空行分隔，区间必须准确引用原文，不能通过查找替换改字；同段区间不能重叠，单块≤15字符，彩色最多4处，总加粗≤15%。按实际内容选择重点，不机械每句加粗或为达到比例硬凑。notes可列已有注释段号，默认空数组。
 
 ```json
 {"emphasis":[{"paragraph":1,"start":0,"end":8,"tone":"accent"}],"notes":[]}
