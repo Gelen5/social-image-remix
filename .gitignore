@@ -5,6 +5,8 @@ dist/
 runs/
 outputs/
 .state/
+.update-cache/
+.update-state.json
 *.log
 .env
 .env.*
