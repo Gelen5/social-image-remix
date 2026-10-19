@@ -16,7 +16,32 @@ from title_quality import validate_titles, check_title_reviews
 from article_cover import check_cover
 
 
+def check_reader_copy(text, label):
+    # Reader copy describes the subject. Provenance/verification belongs in audit files.
+    provenance = (
+        r'(?:按|依照|按照)(?:整理|汇总|收集|所收集|已整理)?(?:的)?'
+        r'(?:资料|素材|信息|清单)(?:所)?(?:列出|提到|显示|给出|整理|介绍|标注)|'
+        r'(?<!申请)(?<!采购)(?:资料|素材|清单)(?:中|里)(?:面)?|'
+        r'(?:原资料|源资料|原素材|源素材|原图|原文|原笔记)|'
+        r'(?:原|源)(?:资料|素材|原文|图|文|笔记)(?:中|里|特别|明确|曾|已|所)*'
+        r'(?:提到|指出|列出|整理|显示|写道|说明|表明|提供|介绍|列有)|'
+        r'(?:根据|依据|据|参照|来自)(?:原|源|上述|相关|这份|这篇)?'
+        r'(?:资料|素材|原文|原图|笔记|清单|公开信息)|'
+        r'(?:这|本)(?:份|篇|组)(?:企业)?(?:资料|素材|笔记|清单)'
+        r'(?:特别|明确)?(?:整理|列出|提到|显示|提供|涵盖|包括|介绍)|'
+        r'信息(?:来[自源]|取自)|(?:取材|来源|出处|核验)(?:说明|状态)|'
+        r'(?:未|尚未|未经)(?:独立|逐一|实际|官方)?(?:核验|核实|查证)|'
+        r'(?:资料|素材|清单|截图|图片|内容)(?:中的|中|里|涉及|显示|表明|指出|提到|说明|描述)|'
+        r'(?:不代表|并非|不能据此|无法据此)[^。！？\n]{0,45}'
+        r'(?:当前|正在|招聘|岗位开放)'
+    )
+    if re.search(provenance, text):
+        raise ValueError(label + '含取材、溯源或核验过程表述，需改为可独立阅读的直接叙述；来源与核验只记入内部文件')
+
+
 def check_copy_style(caption, article):
+    check_reader_copy(caption, '配文')
+    check_reader_copy(article, '文章')
     # Catch known regressions; semantic independence still needs host review.
     if re.search(r'仅[作做供为]信息分享|不涉及(?:任何)?招聘|以(?:企业)?官方(?:信息|公告|发布|要求)为准|岗位是否开放', caption):
         raise ValueError('贴图配文不要重复信息分享、招聘免责声明或官方信息兜底句')
@@ -74,6 +99,15 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if not 1 <= count_text(article) <= 500:
         raise ValueError('文章正文必须非空且不超过500字符')
     title_sets = validate_titles(caption_titles, titles)
+    for title in caption_titles + titles:
+        check_reader_copy(title, '标题')
+    for card in content['cards']:
+        for text in (card['title'], card['subtitle'], card['footer']):
+            check_reader_copy(text, '图片文案')
+        for block in card['blocks']:
+            check_reader_copy(block['heading'], '图片文案')
+            for field in block['fields']:
+                check_reader_copy(field['label'] + field['text'], '图片文案')
     texts = {'caption.txt': caption, 'article.txt': article, 'titles.json': json.dumps(titles, ensure_ascii=False),
              'caption-titles.json': json.dumps(caption_titles, ensure_ascii=False)}
     signature = hashlib.sha256(json.dumps(texts, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
@@ -123,6 +157,7 @@ def check(content_path, manifest_path, image_report_path, text_root):
     if not isinstance(cover_relative,str):raise ValueError('封面报告路径不合法')
     cover_report=local_asset(root,cover_relative)
     cover=check_cover(article,cover_report,review)
+    check_reader_copy(cover['keyword'], '封面文案')
     return {'passed': True, 'content_sha256': digest, 'selected_indices': selected,
             'caption_characters': count_text(caption), 'caption_paragraphs': len(paragraphs), 'article_characters': count_text(article),
             'title_count': 6, 'caption_title_count': 3, 'article_title_count': 3,

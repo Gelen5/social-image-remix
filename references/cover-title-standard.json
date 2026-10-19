@@ -1,0 +1,29 @@
+{
+  "reference": "assets/cover-title-reference.png",
+  "sha256": "d596e94e6c92f74093930c82035b51d45288eec75394c6cda206797c5a49f6d3",
+  "reference_size": {
+    "height": 820,
+    "width": 1918
+  },
+  "visible_glyph_bbox": {
+    "left": 619,
+    "right": 1299,
+    "top": 281,
+    "bottom": 434
+  },
+  "normalized": {
+    "center_y": 0.43597561,
+    "width": 0.354535975,
+    "center_x": 0.5,
+    "height": 0.186585366
+  },
+  "tolerance": {
+    "center_y": 0.005,
+    "width": 0.01,
+    "center_x": 0.005,
+    "height": 0.01
+  },
+  "font_identity": "Unverified generated lettering; actual reference image is authoritative",
+  "text": "招聘资讯",
+  "text_is_example_only": true
+}

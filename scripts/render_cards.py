@@ -200,7 +200,15 @@ def render(args):
               "disclaimer_style": disclaimer_style(style)}
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            try:
+                browser = p.chromium.launch(headless=True)
+            except Exception as chromium_error:
+                # Reuse installed Google Chrome when Playwright's bundled
+                # Chromium is absent (common in managed desktop installs).
+                try:
+                    browser = p.chromium.launch(channel="chrome", headless=True)
+                except Exception:
+                    raise chromium_error
             try:
                 pages = []
                 for markup in htmls:

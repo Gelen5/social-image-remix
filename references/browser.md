@@ -1,6 +1,6 @@
 # 浏览器提取
 
-使用客户现有Chrome+OpenCLI扩展，或宿主已提供的浏览器。优先现有连接，不另开无登录的浏览器替代后声称已复用登录态。
+默认使用客户现有Chrome+OpenCLI扩展，并复用Chrome登录状态。先运行 `python scripts/browser_extract.py doctor` 检查连接。仅在用户明确要求其他浏览器，或Chrome/扩展不可用时才使用宿主提供的其他受控浏览器，并说明切换原因；不另开无登录浏览器后声称已复用登录态。
 
 ## OpenCLI
 
